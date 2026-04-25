@@ -260,9 +260,10 @@ public class Caserito : MonoBehaviour
 
         if (_state == State.Moving)
         {
-            Vector3 dir = FlatDir(_player.position - transform.position);
+            Vector3 dir   = FlatDir(_player.position - transform.position);
+            float   speed = RepairMinigame.IsActive ? moveSpeed * 0.18f : moveSpeed;
             if (dir.sqrMagnitude > 0.01f)
-                _rb.linearVelocity = dir * moveSpeed + Vector3.up * vy;
+                _rb.linearVelocity = dir * speed + Vector3.up * vy;
         }
         else
         {
