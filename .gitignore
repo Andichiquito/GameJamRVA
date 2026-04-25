@@ -1,0 +1,41 @@
+# Unity generated
+Library/
+Temp/
+Logs/
+Obj/
+Build/
+Builds/
+UserSettings/
+MemoryCaptures/
+.vsconfig
+
+# Unity auto-generated VS/Rider solution files
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.unityproj
+*.booproj
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# JetBrains / Rider
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Crash reports
+crashlytics-build.properties
+
+# These folders should be tracked
+!Assets/
+!Packages/
+!ProjectSettings/
