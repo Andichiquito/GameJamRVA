@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -31,36 +32,48 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        _timeLeft = turnDuration;
+        // Auto-create DayManager if absent
+        if (DayManager.Instance == null)
+            new GameObject("DayManager").AddComponent<DayManager>();
+
+        var cfg   = DayManager.Instance.Config;
+        _timeLeft = cfg.turnDuration;
 
         allMachines.AddRange(FindObjectsByType<SlotMachine>(FindObjectsSortMode.None));
         allMachines.Sort((a, b) => a.machineIndex.CompareTo(b.machineIndex));
 
-        BreakRandom();
+        SetupCaseritos(cfg.caseritos);
+        BreakRandom(cfg.machinesToBreak);
         GameHUD.Instance?.RefreshTaskList();
 
-        // Auto-create GerenteManager if not already in scene
+        // Auto-create GerenteManager if absent
         if (GerenteManager.Instance == null)
-        {
-            var go = new GameObject("GerenteManager");
-            go.AddComponent<GerenteManager>();
-        }
-        GerenteManager.Instance.ShowIntro(OnIntroComplete);
+            new GameObject("GerenteManager").AddComponent<GerenteManager>();
+
+        GerenteManager.Instance.ShowDayIntro(DayManager.Instance.CurrentDay, OnIntroComplete);
     }
 
     void OnIntroComplete() => _gameStarted = true;
 
-    void BreakRandom()
+    // Enable only the first `count` caseritos found in the scene; disable the rest
+    void SetupCaseritos(int count)
+    {
+        var all = FindObjectsByType<Caserito>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+            all[i].gameObject.SetActive(i < count);
+    }
+
+    void BreakRandom(int count)
     {
         var pool = new List<SlotMachine>(allMachines);
-        // Fisher-Yates shuffle
         for (int i = pool.Count - 1; i > 0; i--)
         {
             int j = Random.Range(0, i + 1);
             (pool[i], pool[j]) = (pool[j], pool[i]);
         }
-        int count = Mathf.Clamp(Random.Range(2, 4), 0, pool.Count);
-        for (int i = 0; i < count; i++)
+        int n = Mathf.Clamp(count, 0, pool.Count);
+        for (int i = 0; i < n; i++)
         {
             pool[i].SetBroken();
             brokenMachines.Add(pool[i]);
@@ -114,15 +127,30 @@ public class GameManager : MonoBehaviour
     void FreezeAndShow()
     {
         Time.timeScale = 0f;
-        if (GerenteManager.Instance != null)
+        if (GerenteManager.Instance == null) { GameHUD.Instance?.ShowEnd(_pendingWon); return; }
+
+        if (!_pendingWon)
         {
-            if (_pendingWon) GerenteManager.Instance.ShowVictory();
-            else             GerenteManager.Instance.ShowTimeGameOver();
+            GerenteManager.Instance.ShowTimeGameOver();
+            return;
         }
+
+        int  repaired = initialBroken.Count - brokenMachines.Count;
+        int  total    = initialBroken.Count;
+        int  day      = DayManager.Instance?.CurrentDay ?? 1;
+        bool isFinal  = DayManager.Instance?.IsFinalDay ?? false;
+
+        if (isFinal)
+            GerenteManager.Instance.ShowFinalVictory();
         else
-        {
-            GameHUD.Instance?.ShowEnd(_pendingWon);
-        }
+            GerenteManager.Instance.ShowDayComplete(day, _timeLeft, repaired, total, OnDayComplete);
+    }
+
+    void OnDayComplete()
+    {
+        DayManager.Instance?.AdvanceDay();
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void OnDestroy()

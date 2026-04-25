@@ -69,8 +69,14 @@ public class GerenteManager : MonoBehaviour
     }
 
     // ─── Public API ───────────────────────────────────────────────────────────
-    public void ShowIntro(Action onComplete)
-        => StartCoroutine(IntroRoutine(onComplete));
+    public void ShowDayIntro(int day, Action onComplete)
+        => StartCoroutine(IntroRoutine(day, onComplete));
+
+    public void ShowDayComplete(int day, float timeLeft, int repaired, int total, Action onNext)
+        => StartCoroutine(DayCompleteRoutine(day, timeLeft, repaired, total, onNext));
+
+    public void ShowFinalVictory()
+        => StartCoroutine(FinalVictoryRoutine());
 
     public void ShowCaseritoGameOver()
         => StartCoroutine(EndRoutine(
@@ -88,16 +94,8 @@ public class GerenteManager : MonoBehaviour
             footer:   "DESPEDIDO.",
             titleCol: new Color(0.90f, 0.08f, 0.08f)));
 
-    public void ShowVictory()
-        => StartCoroutine(EndRoutine(
-            won:      true,
-            title:    "¡TURNO COMPLETADO!",
-            body:     "...Impresionante. Sobreviviste tu turno de prueba.\nBienvenido al equipo. Aunque...\ndudo que quieras volver mañana.",
-            footer:   "",
-            titleCol: new Color(0.95f, 0.80f, 0.10f)));
-
     // ─── Intro routine ────────────────────────────────────────────────────────
-    IEnumerator IntroRoutine(Action onComplete)
+    IEnumerator IntroRoutine(int day, Action onComplete)
     {
         var fpc = FindAnyObjectByType<FirstPersonController>();
         if (fpc) fpc.enabled = false;
@@ -143,10 +141,24 @@ public class GerenteManager : MonoBehaviour
             "[ESPACIO / ENTER]  Continuar", new Color(0.40f, 0.40f, 0.40f), 12, TextAnchor.LowerRight);
         SA(skipHint.rectTransform, 0, 0, 1, 0, 0, 8, -14, 22);
 
-        const string dialogue =
-            "Bienvenido a tu turno de prueba. Tienes 5 minutos.\n" +
-            "Arregla las máquinas averiadas antes de que acabe tu turno.\n" +
-            "Y... ten cuidado con los clientes. Son... especiales.";
+        string dialogue = day switch
+        {
+            1 => "Bienvenido a tu turno de prueba. Tienes 5 minutos.\n" +
+                 "Arregla las máquinas averiadas antes de que acabe tu turno.\n" +
+                 "Y... ten cuidado con los clientes. Son... especiales.",
+            2 => "Volviste. Interesante.\n" +
+                 "Hoy será más difícil. Los clientes están inquietos.\n" +
+                 "Arregla las máquinas. No los dejes verte trabajar.",
+            3 => "Los clientes están más... activos esta noche.\n" +
+                 "Te recomiendo que te muevas rápido.\n" +
+                 "No querrás saber qué pasa si te atrapan.",
+            4 => "Casi nadie llega al día 4. Impresionante.\n" +
+                 "Pero no te confíes. Esta noche no habrá piedad.\n" +
+                 "Arregla todo. Rápido.",
+            _ => "Esta es tu última noche. Demuestra que vales.\n" +
+                 "Si sobrevives esto... serás parte del equipo.\n" +
+                 "Si no... bueno. No tendrás que preocuparte por eso.",
+        };
 
         // Typewriter — can be skipped
         bool typewriterDone = false;
@@ -340,6 +352,169 @@ public class GerenteManager : MonoBehaviour
             b.color = c;
             yield return null;
         }
+    }
+
+    // ─── Day-complete screen ──────────────────────────────────────────────────
+    IEnumerator DayCompleteRoutine(int day, float timeLeft, int repaired, int total, Action onNext)
+    {
+        var canvas = EnsureCanvas();
+
+        var root   = Go("DayCompletePanel", canvas.transform);
+        var rootRt = root.AddComponent<RectTransform>();
+        Stretch(rootRt);
+        var rootImg = root.AddComponent<Image>();
+        rootImg.color        = Color.clear;
+        rootImg.raycastTarget = true;
+
+        yield return StartCoroutine(FadeImg(rootImg,
+            Color.clear, new Color(0.02f, 0.01f, 0.01f, 0.96f), 0.45f));
+
+        BuildManagerFigure(root.transform, new Vector2(0f, 90f), ManagerMood.Happy);
+
+        Color gold = new Color(0.95f, 0.80f, 0.10f);
+
+        // Main content box
+        var cbox = Img("CBox", root.transform, new Color(0f, 0f, 0f, 0.86f));
+        SA(cbox.rectTransform, 0.10f, 0.04f, 0.90f, 0.42f, 0, 0, 0, 0);
+
+        var cbdr = Img("CBdr", cbox.transform, new Color(gold.r * 0.5f, gold.g * 0.5f, 0f, 0.65f));
+        SA(cbdr.rectTransform, 0, 0, 1, 1, -2, -2, 2, 2);
+        cbox.transform.Find("CBdr").SetAsFirstSibling();
+
+        // Title
+        var titleTxt = Txt("Title", cbox.transform,
+            $"✓  FIN DE TURNO — DÍA {day}", gold, 20, TextAnchor.MiddleCenter, FontStyle.Bold);
+        SA(titleTxt.rectTransform, 0, 0.72f, 1, 1, 10, 0, -10, -4);
+
+        // Stats
+        int   mins    = (int)(timeLeft / 60f);
+        int   secs    = (int)(timeLeft % 60f);
+        string timeFmt = $"{mins:0}:{secs:00}";
+
+        var statsTxt = Txt("Stats", cbox.transform,
+            $"Tiempo sobrante:  {timeFmt}          Máquinas reparadas:  {repaired} / {total}",
+            new Color(0.85f, 0.82f, 0.75f), 14, TextAnchor.MiddleCenter);
+        SA(statsTxt.rectTransform, 0, 0.40f, 1, 0.74f, 12, 0, -12, 0);
+
+        // Flavour line
+        string[] flavour =
+        {
+            "El casino respira por un momento.",
+            "Las máquinas vuelven a girar. Por ahora.",
+            "El gerente asiente, casi imperceptiblemente.",
+            "Sobreviviste otra noche. Eso es... inusual.",
+            "",
+        };
+        string flav = flavour[Mathf.Clamp(day - 1, 0, flavour.Length - 1)];
+        if (!string.IsNullOrEmpty(flav))
+        {
+            var flavTxt = Txt("Flav", cbox.transform,
+                $"\"{flav}\"", new Color(0.55f, 0.52f, 0.45f), 12, TextAnchor.MiddleCenter, FontStyle.Italic);
+            SA(flavTxt.rectTransform, 0, 0.20f, 1, 0.43f, 16, 0, -16, 0);
+        }
+
+        yield return new WaitForSecondsRealtime(0.4f);
+
+        // Next day button
+        var nextBtn = MakeButton("BtnNext", cbox.transform,
+            $"Día {day + 1}  →",
+            new Color(0.12f, 0.10f, 0.03f), gold,
+            () => onNext?.Invoke());
+        SA(nextBtn.GetComponent<RectTransform>(), 0.20f, 0.02f, 0.80f, 0.20f, 0, 0, 0, 0);
+    }
+
+    // ─── Final victory + credits ───────────────────────────────────────────────
+    IEnumerator FinalVictoryRoutine()
+    {
+        var canvas = EnsureCanvas();
+        Color gold = new Color(0.95f, 0.80f, 0.10f);
+
+        var root   = Go("FinalPanel", canvas.transform);
+        var rootRt = root.AddComponent<RectTransform>();
+        Stretch(rootRt);
+        var rootImg = root.AddComponent<Image>();
+        rootImg.color        = Color.clear;
+        rootImg.raycastTarget = true;
+
+        yield return StartCoroutine(FadeImg(rootImg,
+            Color.clear, new Color(0.02f, 0.01f, 0.01f, 1f), 0.70f));
+
+        BuildManagerFigure(root.transform, new Vector2(0f, 85f), ManagerMood.Happy);
+        _audio.PlayOneShot(_jackpotClip, 0.90f);
+        StartCoroutine(SpawnConfetti(root.transform));
+
+        // Cutscene dialogue box
+        var dbox = Img("DBox", root.transform, new Color(0f, 0f, 0f, 0.86f));
+        SA(dbox.rectTransform, 0.06f, 0.36f, 0.94f, 0.55f, 0, 0, 0, 0);
+
+        var dbdr = Img("DBdr", dbox.transform, new Color(gold.r * 0.5f, gold.g * 0.5f, 0f, 0.65f));
+        SA(dbdr.rectTransform, 0, 0, 1, 1, -2, -2, 2, 2);
+        dbox.transform.Find("DBdr").SetAsFirstSibling();
+
+        var speakerLbl = Txt("Speaker", dbox.transform,
+            "EL GERENTE", new Color(0.92f, 0.72f, 0.08f), 12, TextAnchor.UpperLeft, FontStyle.Bold);
+        SA(speakerLbl.rectTransform, 0, 1, 0.5f, 1, 14, 2, 0, 16);
+
+        var dialogTxt = Txt("Dialog", dbox.transform,
+            "", new Color(0.95f, 0.92f, 0.85f), 16, TextAnchor.UpperLeft);
+        SA(dialogTxt.rectTransform, 0, 0, 1, 1, 14, 8, -14, -8);
+        dialogTxt.lineSpacing = 1.35f;
+
+        const string cutscene =
+            "Lo lograste. Cinco noches. Nadie lo había hecho antes.\n" +
+            "Eres oficialmente parte del equipo.\n" +
+            "Aunque... ¿realmente quieres seguir trabajando aquí?";
+
+        bool done = false;
+        _typewriterRoutine = StartCoroutine(Typewriter(cutscene, dialogTxt, 0.045f, () => done = true));
+        while (!done) yield return null;
+
+        yield return new WaitForSecondsRealtime(1.2f);
+
+        // Credits panel
+        var credits = Img("Credits", root.transform, new Color(0f, 0f, 0f, 0.0f));
+        SA(credits.rectTransform, 0.15f, 0.04f, 0.85f, 0.34f, 0, 0, 0, 0);
+        yield return StartCoroutine(FadeImg(credits, Color.clear, new Color(0f, 0f, 0f, 0.82f), 0.5f));
+
+        var credBdr = Img("CrBdr", credits.transform, new Color(gold.r * 0.4f, gold.g * 0.4f, 0f, 0.5f));
+        SA(credBdr.rectTransform, 0, 0, 1, 1, -2, -2, 2, 2);
+        credits.transform.Find("CrBdr").SetAsFirstSibling();
+
+        var credTitle = Txt("CrTitle", credits.transform,
+            "CASINO NOCTURNO", gold, 18, TextAnchor.UpperCenter, FontStyle.Bold);
+        SA(credTitle.rectTransform, 0, 0.65f, 1, 1, 10, 4, -10, -4);
+
+        var credBody = Txt("CrBody", credits.transform,
+            "Hecho para GameJamRVA\n\nGracias por jugar",
+            new Color(0.70f, 0.68f, 0.60f), 13, TextAnchor.UpperCenter);
+        credBody.lineSpacing = 1.5f;
+        SA(credBody.rectTransform, 0, 0.05f, 1, 0.68f, 14, 0, -14, 0);
+
+        yield return new WaitForSecondsRealtime(0.5f);
+
+        // Buttons
+        var replayBtn = MakeButton("BtnReplay", root.transform,
+            "↺  Jugar de Nuevo",
+            new Color(0.12f, 0.10f, 0.03f), gold,
+            () =>
+            {
+                DayManager.Instance?.ResetProgress();
+                Time.timeScale = 1f;
+                UnityEngine.SceneManagement.SceneManager.LoadScene(
+                    UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            });
+        SA(replayBtn.GetComponent<RectTransform>(), 0.18f, 0.04f, 0.49f, 0.15f, 0, 0, -4, 0);
+
+        var menuBtn = MakeButton("BtnMenu", root.transform,
+            "⌂  Menú Principal",
+            new Color(0.10f, 0.05f, 0.05f), new Color(0.75f, 0.22f, 0.18f),
+            () =>
+            {
+                DayManager.Instance?.ResetProgress();
+                Time.timeScale = 1f;
+                UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+            });
+        SA(menuBtn.GetComponent<RectTransform>(), 0.51f, 0.04f, 0.82f, 0.15f, 4, 0, 0, 0);
     }
 
     // ─── Confetti ─────────────────────────────────────────────────────────────
