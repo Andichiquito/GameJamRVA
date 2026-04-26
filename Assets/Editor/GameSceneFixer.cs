@@ -377,9 +377,9 @@ public class GameSceneFixer
             new Vector2(0.02f, 0.82f), new Vector2(0.98f, 0.835f),
             new Color(0.25f, 0.50f, 0.18f, 0.8f));
 
-        var taskGO = new GameObject("TaskList");
+        var taskGO = new GameObject("TaskList", typeof(RectTransform));
         taskGO.transform.SetParent(tabletScreen.transform, false);
-        var taskRT = taskGO.AddComponent<RectTransform>();
+        var taskRT = taskGO.GetComponent<RectTransform>();
         taskRT.anchorMin = new Vector2(0.04f, 0.02f);
         taskRT.anchorMax = new Vector2(0.96f, 0.80f);
         taskRT.offsetMin = taskRT.offsetMax = Vector2.zero;
@@ -399,13 +399,13 @@ public class GameSceneFixer
         promptGO.SetActive(false);
 
         // RepairMinigame container — EnsureUI() builds the rest on first Open()
-        var repairPanel = new GameObject("RepairPanel");
+        var repairPanel = new GameObject("RepairPanel", typeof(RectTransform));
         repairPanel.transform.SetParent(cGO.transform, false);
         FullScreen(repairPanel);
         repairPanel.SetActive(false);
 
         // End panel — full screen
-        var endPanel = new GameObject("EndPanel");
+        var endPanel = new GameObject("EndPanel", typeof(RectTransform));
         endPanel.transform.SetParent(cGO.transform, false);
         FullScreen(endPanel);
         Panel("Darkener", endPanel.transform, Vector2.zero, Vector2.one,
@@ -495,7 +495,7 @@ public class GameSceneFixer
     // ─────────────────────────────────────────────────────────────────────
     static GameObject Panel(string name, Transform parent, Vector2 ancMin, Vector2 ancMax, Color color)
     {
-        var go = new GameObject(name);
+        var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         go.AddComponent<Image>().color = color;
@@ -506,7 +506,7 @@ public class GameSceneFixer
         Vector2 ancMin, Vector2 ancMax, string text,
         Color color, int size, FontStyle style, Font font)
     {
-        var go = new GameObject(name);
+        var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         var txt = go.AddComponent<Text>();
@@ -520,7 +520,7 @@ public class GameSceneFixer
         Vector2 ancMin, Vector2 ancMax, string label,
         Color bgColor, Color textColor, Font font, int fontSize)
     {
-        var go = new GameObject(name);
+        var go = new GameObject(name, typeof(RectTransform));
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         var img = go.AddComponent<Image>();
@@ -532,7 +532,7 @@ public class GameSceneFixer
         c.pressedColor     = bgColor * 0.7f;
         btn.colors = c;
 
-        var lgo = new GameObject("Label");
+        var lgo = new GameObject("Label", typeof(RectTransform));
         lgo.transform.SetParent(go.transform, false);
         Anchor(lgo, Vector2.zero, Vector2.one);
         var txt = lgo.AddComponent<Text>();
@@ -544,14 +544,16 @@ public class GameSceneFixer
 
     static void Anchor(GameObject go, Vector2 min, Vector2 max)
     {
-        var rt = go.GetComponent<RectTransform>() ?? go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>();
+        if (rt == null) rt = go.AddComponent<RectTransform>();
         rt.anchorMin = min; rt.anchorMax = max;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
     }
 
     static void FullScreen(GameObject go)
     {
-        var rt = go.GetComponent<RectTransform>() ?? go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>();
+        if (rt == null) rt = go.AddComponent<RectTransform>();
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
     }
