@@ -6,7 +6,8 @@ using UnityEngine.UI;
 
 public class GameSceneFixer
 {
-    const float W = 9f, H = 3.2f, D = 28f;
+    // ── Room dimensions ───────────────────────────────────────────────────
+    const float W = 13f, H = 3.8f, D = 52f;
 
     [MenuItem("Casino/Rebuild GameScene (Night of Consumers)")]
     public static void Execute()
@@ -32,8 +33,10 @@ public class GameSceneFixer
         var screenMat  = Upsert("Assets/Materials/SlotScreen.mat",    new Color(0.0f,  0.65f, 0.15f), 0.0f, 0.90f);
         SetEmission(screenMat, new Color(0f, 1f, 0.2f) * 2.5f);
         SetEmission(redMat,    new Color(1f, 0.04f, 0.04f) * 0.6f);
-        var stripMat = Upsert("Assets/Materials/LightStrip.mat", new Color(0.75f, 0.82f, 0.50f), 0.0f, 1.0f);
+        var stripMat   = Upsert("Assets/Materials/LightStrip.mat",    new Color(0.75f, 0.82f, 0.50f), 0.0f, 1.0f);
         SetEmission(stripMat, new Color(0.55f, 0.72f, 0.28f) * 2.2f);
+        var tableMat   = Upsert("Assets/Materials/CasinoTable.mat",   new Color(0.28f, 0.13f, 0.04f), 0.2f, 0.35f);
+        var pillarMat  = Upsert("Assets/Materials/CasinoPillar.mat",  new Color(0.16f, 0.13f, 0.07f), 0.1f, 0.20f);
         AssetDatabase.SaveAssets();
 
         // ── New scene ─────────────────────────────────────────────────────
@@ -44,10 +47,10 @@ public class GameSceneFixer
         RenderSettings.fog              = true;
         RenderSettings.fogColor         = new Color(0.012f, 0.018f, 0.004f);
         RenderSettings.fogMode          = FogMode.Linear;
-        RenderSettings.fogStartDistance = 3f;
-        RenderSettings.fogEndDistance   = 12f;
+        RenderSettings.fogStartDistance = 4f;
+        RenderSettings.fogEndDistance   = 18f;
 
-        // ── Room ──────────────────────────────────────────────────────────
+        // ── Room geometry ─────────────────────────────────────────────────
         Box("Floor",     new Vector3(0,  -0.5f,     0), new Vector3(W,   1f,   D),   floorMat);
         Box("Ceiling",   new Vector3(0,  H + 0.5f,  0), new Vector3(W,   1f,   D),   ceilMat);
         Box("WallLeft",  new Vector3(-W/2f-0.25f, H/2f, 0), new Vector3(0.5f, H+1f, D+1f), wallMat);
@@ -55,39 +58,56 @@ public class GameSceneFixer
         Box("WallBack",  new Vector3(0, H/2f, -D/2f-0.25f), new Vector3(W+1f, H+1f, 0.5f), wallMat);
         Box("WallFront", new Vector3(0, H/2f,  D/2f+0.25f), new Vector3(W+1f, H+1f, 0.5f), wallMat);
 
-        // ── 6 Slot Machines (3 pairs) ─────────────────────────────────────
-        float[] mZ = { -8f, 0f, 8f };
-        int     idx = 0;
+        // ── Decorative pillars along walls ─────────────────────────────────
+        float[] pillarZ = { -20f, -10f, 0f, 10f, 20f };
+        foreach (float z in pillarZ)
+        {
+            Pillar("PillarL_" + (int)z, new Vector3(-W/2f + 0.65f, H/2f, z), pillarMat);
+            Pillar("PillarR_" + (int)z, new Vector3( W/2f - 0.65f, H/2f, z), pillarMat);
+        }
+
+        // ── 16 Slot Machines — 8 pairs ────────────────────────────────────
+        float[] mZ = { -22f, -16f, -10f, -4f, 2f, 8f, 14f, 20f };
+        int machineIdx = 0;
         foreach (float z in mZ)
         {
-            SlotMachineGrouped("Machine_L" + (int)z, idx++, new Vector3(-3f, 0f, z), true,
+            SlotMachineGrouped("Machine_L" + (int)z, machineIdx++, new Vector3(-4.5f, 0f, z), true,
                 bodyMat, trimMat, screenMat, redMat);
-            SlotMachineGrouped("Machine_R" + (int)z, idx++, new Vector3( 3f, 0f, z), false,
+            SlotMachineGrouped("Machine_R" + (int)z, machineIdx++, new Vector3( 4.5f, 0f, z), false,
                 bodyMat, trimMat, screenMat, redMat);
         }
 
-        // ── Wall neons ────────────────────────────────────────────────────
+        // ── Mesitas (tables) scattered in center aisle ────────────────────
+        // Alternating sides and slight offsets so they feel organic
+        (float z, float x)[] tables = {
+            (-19f, -1.5f), (-13f,  1.8f), (-7f, -2.0f),
+            ( -1f,  0.0f), (  5f,  1.5f), (11f, -1.8f), (17f, 1.0f),
+        };
+        for (int i = 0; i < tables.Length; i++)
+            Table("Table_" + i, new Vector3(tables[i].x, 0f, tables[i].z), tableMat);
+
+        // ── Wall neons — 8 per side ────────────────────────────────────────
         Color[] neons = {
             new Color(1.0f, 0.06f, 0.06f),
             new Color(0.90f, 0.55f, 0.0f),
             new Color(0.85f, 0.08f, 0.75f),
         };
-        float[] nZ = { -10f, -4f, 4f, 10f };
+        float[] nZ = { -20f, -14f, -8f, -2f, 4f, 10f, 16f, 20f };
         for (int i = 0; i < nZ.Length; i++)
         {
-            WallNeon("NeonL" + i, new Vector3(-W/2f+0.3f, H-0.5f, nZ[i]), neons[i%3],       1.6f, 5f);
-            WallNeon("NeonR" + i, new Vector3( W/2f-0.3f, H-0.5f, nZ[i]), neons[(i+1)%3], 1.6f, 5f);
+            WallNeon("NeonL" + i, new Vector3(-W/2f+0.3f, H-0.5f, nZ[i]), neons[i % 3],       1.8f, 6f);
+            WallNeon("NeonR" + i, new Vector3( W/2f-0.3f, H-0.5f, nZ[i]), neons[(i+1) % 3], 1.8f, 6f);
         }
 
-        // ── Ceiling strips ────────────────────────────────────────────────
-        float[] cZ = { -10f, -4f, 2f, 8f };
+        // ── Ceiling fluorescent strips ─────────────────────────────────────
+        float[] cZ = { -22f, -16f, -10f, -4f, 2f, 8f, 14f, 20f };
         foreach (float z in cZ)
-            CeilStrip("Strip_" + (int)z, new Vector3(0f, H-0.05f, z), stripMat);
+            CeilStrip("Strip_" + (int)z, new Vector3(0f, H - 0.05f, z), stripMat);
 
         // ── Player ────────────────────────────────────────────────────────
         var playerGO = new GameObject("Player");
         playerGO.tag = "Player";
-        playerGO.transform.position = new Vector3(0f, 1f, -12f);
+        playerGO.transform.position = new Vector3(0f, 1f, -24f);
 
         var cc = playerGO.AddComponent<CharacterController>();
         cc.height = 2f; cc.center = Vector3.zero;
@@ -106,19 +126,20 @@ public class GameSceneFixer
         // ── HUD + Game scripts ────────────────────────────────────────────
         BuildHUD();
 
-        // ── Caseritos (animatrónicos enemigos) ────────────────────────────
-        // Player starts at (0,1,-12). Machines at z=-8,0,8 x=±3.
-        // Place caseritos in the aisles — they activate after 4 seconds.
-        SpawnCaserito("Caserito_1", new Vector3( 0.5f, 0f, -5f));
-        SpawnCaserito("Caserito_2", new Vector3(-1.5f, 0f,  3f));
-        SpawnCaserito("Caserito_3", new Vector3( 1.0f, 0f, 11f));
+        // ── Caseritos — 5 spread across the expanded space ────────────────
+        // GameManager activates only cfg.caseritos of these per day
+        SpawnCaserito("Caserito_1", new Vector3( 1.0f, 0f, -14f));
+        SpawnCaserito("Caserito_2", new Vector3(-1.5f, 0f,  -4f));
+        SpawnCaserito("Caserito_3", new Vector3( 1.0f, 0f,   6f));
+        SpawnCaserito("Caserito_4", new Vector3(-1.0f, 0f,  14f));
+        SpawnCaserito("Caserito_5", new Vector3( 0.5f, 0f,  20f));
 
         // ── Save ──────────────────────────────────────────────────────────
         if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
             AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/GameScene.unity");
         AssetDatabase.SaveAssets();
-        Debug.Log("[GameSceneFixer] GameScene reconstruida con sistema de reparación.");
+        Debug.Log("[GameSceneFixer] GameScene expandida: mapa ampliado, 16 maquinitas, 7 mesitas, pilares y más luces.");
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -136,13 +157,12 @@ public class GameSceneFixer
         sm.machineName  = "Máquina " + (machineIdx + 1);
         sm.machineIndex = machineIdx;
 
-        // Parts as children
-        BoxChild(parent, "_Base",  new Vector3(0f, 0.10f, 0f),    new Vector3(0.90f, 0.20f, 0.58f), body);
-        BoxChild(parent, "_Body",  new Vector3(0f, 1.20f, 0f),    new Vector3(0.80f, 2.00f, 0.50f), body);
-        BoxChild(parent, "_Cap",   new Vector3(0f, 2.25f, 0f),    new Vector3(0.82f, 0.12f, 0.52f), trim);
+        BoxChild(parent, "_Base",  new Vector3(0f, 0.10f, 0f),     new Vector3(0.90f, 0.20f, 0.58f), body);
+        BoxChild(parent, "_Body",  new Vector3(0f, 1.20f, 0f),     new Vector3(0.80f, 2.00f, 0.50f), body);
+        BoxChild(parent, "_Cap",   new Vector3(0f, 2.25f, 0f),     new Vector3(0.82f, 0.12f, 0.52f), trim);
         BoxChild(parent, "_TrimF", new Vector3(0f, 1.20f,  0.26f), new Vector3(0.82f, 2.02f, 0.02f), trim);
         BoxChild(parent, "_TrimB", new Vector3(0f, 1.20f, -0.26f), new Vector3(0.82f, 2.02f, 0.02f), trim);
-        BoxChild(parent, "_Red",   new Vector3(0f, 0.30f,  0f),   new Vector3(0.81f, 0.08f, 0.51f), red);
+        BoxChild(parent, "_Red",   new Vector3(0f, 0.30f,  0f),    new Vector3(0.81f, 0.08f, 0.51f), red);
 
         var scrOff = new Vector3(side * 0.41f, 1.3f, 0f);
         BoxChild(parent, "_Screen", scrOff, new Vector3(0.02f, 0.65f, 0.40f), screen);
@@ -156,7 +176,7 @@ public class GameSceneFixer
         sl.intensity = 0.8f; sl.range = 2.5f;
         sm.screenLight = sl;
 
-        // Neon sign above machine — starts disabled, enabled when broken
+        // Neon sign above machine — disabled until broken
         var neonGO = new GameObject("NeonSign");
         neonGO.transform.SetParent(parent.transform);
         neonGO.transform.position = basePos + new Vector3(0f, H - 0.35f, 0f);
@@ -168,13 +188,41 @@ public class GameSceneFixer
     }
 
     // ─────────────────────────────────────────────────────────────────────
+    // MESITA (TABLE)
+    // ─────────────────────────────────────────────────────────────────────
+    static void Table(string name, Vector3 basePos, Material mat)
+    {
+        var parent = new GameObject(name);
+        parent.transform.position = basePos;
+
+        // Tabletop
+        BoxChild(parent, "_Top",   new Vector3(0f,     0.76f,  0f),    new Vector3(1.40f, 0.06f, 0.90f), mat);
+        // Four legs
+        BoxChild(parent, "_LegFL", new Vector3(-0.60f, 0.38f,  0.38f), new Vector3(0.07f, 0.76f, 0.07f), mat);
+        BoxChild(parent, "_LegFR", new Vector3( 0.60f, 0.38f,  0.38f), new Vector3(0.07f, 0.76f, 0.07f), mat);
+        BoxChild(parent, "_LegBL", new Vector3(-0.60f, 0.38f, -0.38f), new Vector3(0.07f, 0.76f, 0.07f), mat);
+        BoxChild(parent, "_LegBR", new Vector3( 0.60f, 0.38f, -0.38f), new Vector3(0.07f, 0.76f, 0.07f), mat);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // DECORATIVE PILLAR
+    // ─────────────────────────────────────────────────────────────────────
+    static void Pillar(string name, Vector3 center, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = name;
+        go.transform.position   = center;
+        go.transform.localScale = new Vector3(0.40f, H, 0.40f);
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
     // HUD CANVAS + GAME SCRIPTS
     // ─────────────────────────────────────────────────────────────────────
     static void BuildHUD()
     {
         var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
-        // ── Canvas ────────────────────────────────────────────────────────
         var cGO = new GameObject("HUDCanvas");
         var canvas = cGO.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -185,12 +233,10 @@ public class GameSceneFixer
         cs.matchWidthOrHeight = 0.5f;
         cGO.AddComponent<GraphicRaycaster>();
 
-        // EventSystem
         var esGO = new GameObject("EventSystem");
         esGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
         esGO.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
-        // ── Timer panel (top center) ──────────────────────────────────────
         var timerBg = Panel("TimerBg", cGO.transform,
             new Vector2(0.38f, 0.93f), new Vector2(0.62f, 1.0f),
             new Color(0.04f, 0.03f, 0.02f, 0.88f));
@@ -199,11 +245,9 @@ public class GameSceneFixer
             new Color(0.92f, 0.80f, 0.08f), 44, FontStyle.Bold, font);
         timerBg.GetComponent<Image>().color = new Color(0.04f, 0.03f, 0.02f, 0.88f);
 
-        // ── Tablet panel (bottom right) ───────────────────────────────────
         var tabletBezel = Panel("Tablet", cGO.transform,
             new Vector2(0.75f, 0.01f), new Vector2(0.99f, 0.32f),
             new Color(0.12f, 0.10f, 0.06f, 0.96f));
-        // Inner screen
         var tabletScreen = Panel("TabletScreen", tabletBezel.transform,
             new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.97f),
             new Color(0.02f, 0.06f, 0.02f, 1f));
@@ -211,10 +255,10 @@ public class GameSceneFixer
             new Vector2(0f, 0.84f), new Vector2(1f, 1f),
             "TABLETA DE TURNO",
             new Color(0.38f, 0.70f, 0.28f), 13, FontStyle.Bold, font);
-        var divider = Panel("Divider", tabletScreen.transform,
+        Panel("Divider", tabletScreen.transform,
             new Vector2(0.02f, 0.82f), new Vector2(0.98f, 0.835f),
             new Color(0.25f, 0.50f, 0.18f, 0.8f));
-        // Task list with VerticalLayoutGroup
+
         var taskGO = new GameObject("TaskList");
         taskGO.transform.SetParent(tabletScreen.transform, false);
         var taskRT = taskGO.AddComponent<RectTransform>();
@@ -226,7 +270,6 @@ public class GameSceneFixer
         vlg.childForceExpandHeight = false;
         vlg.padding = new RectOffset(4, 4, 4, 4);
 
-        // ── Prompt (center bottom) ─────────────────────────────────────────
         var promptGO = Panel("PromptPanel", cGO.transform,
             new Vector2(0.28f, 0.08f), new Vector2(0.72f, 0.16f),
             new Color(0.02f, 0.02f, 0.01f, 0.80f));
@@ -236,16 +279,13 @@ public class GameSceneFixer
             new Color(0.85f, 0.78f, 0.20f), 24, FontStyle.Bold, font);
         promptGO.SetActive(false);
 
-        // ── Repair Panel (full screen overlay) ────────────────────────────
         var repairPanel = new GameObject("RepairPanel");
         repairPanel.transform.SetParent(cGO.transform, false);
         FullScreen(repairPanel);
 
-        // Dark overlay
-        var darkener = Panel("Darkener", repairPanel.transform,
+        Panel("Darkener", repairPanel.transform,
             Vector2.zero, Vector2.one, new Color(0f, 0f, 0f, 0.82f));
 
-        // Repair window
         var repairWin = Panel("RepairWindow", repairPanel.transform,
             new Vector2(0.22f, 0.22f), new Vector2(0.78f, 0.78f),
             new Color(0.06f, 0.05f, 0.02f, 0.97f));
@@ -255,7 +295,6 @@ public class GameSceneFixer
             "PANEL DE REPARACIÓN",
             new Color(0.92f, 0.80f, 0.08f), 28, FontStyle.Bold, font);
 
-        // Cables row
         var cablesRow = new GameObject("CablesRow");
         cablesRow.transform.SetParent(repairWin.transform, false);
         Anchor(cablesRow, new Vector2(0.05f, 0.45f), new Vector2(0.95f, 0.78f));
@@ -264,13 +303,12 @@ public class GameSceneFixer
         hlg.childForceExpandHeight = true;
         hlg.padding = new RectOffset(8, 8, 4, 4);
 
-        var cableBtns = new Button[3];
         for (int i = 0; i < 3; i++)
         {
             var btnGO = new GameObject("CableBtn" + i);
             btnGO.transform.SetParent(cablesRow.transform, false);
             var btnImg = btnGO.AddComponent<Image>();
-            btnImg.color = Color.grey; // set at runtime by RepairMinigame
+            btnImg.color = Color.grey;
             var btn = btnGO.AddComponent<Button>();
             var col = btn.colors;
             col.pressedColor = new Color(0.6f, 0.6f, 0.6f); btn.colors = col;
@@ -281,13 +319,10 @@ public class GameSceneFixer
             var lbl = lblGO.AddComponent<Text>();
             lbl.font = font; lbl.fontSize = 20; lbl.fontStyle = FontStyle.Bold;
             lbl.alignment = TextAnchor.MiddleCenter;
-            lbl.color = Color.white;
-            lbl.text = "---";
-
-            cableBtns[i] = btn;
+            lbl.color = Color.white; lbl.text = "---";
         }
 
-        var progressTxt = Label("ProgressText", repairWin.transform,
+        Label("ProgressText", repairWin.transform,
             new Vector2(0f, 0.28f), new Vector2(1f, 0.44f),
             "Conecta en orden: ROJO → AMARILLO → AZUL",
             new Color(0.72f, 0.88f, 0.32f), 16, FontStyle.Normal, font);
@@ -299,7 +334,6 @@ public class GameSceneFixer
 
         repairPanel.SetActive(false);
 
-        // ── End Panel (full screen) ────────────────────────────────────────
         var endPanel = new GameObject("EndPanel");
         endPanel.transform.SetParent(cGO.transform, false);
         FullScreen(endPanel);
@@ -328,39 +362,31 @@ public class GameSceneFixer
 
         endPanel.SetActive(false);
 
-        // ── Runtime scripts ───────────────────────────────────────────────
-
-        // GameManager
         var gmGO = new GameObject("GameManager");
         var gm = gmGO.AddComponent<GameManager>();
         gm.turnDuration = 300f;
 
-        // RepairMinigame va en HUDCanvas (siempre activo) para que Awake() corra.
-        // repairPanel empieza inactivo pero la referencia rm.panel lo activa al abrir.
         var rm = cGO.AddComponent<RepairMinigame>();
         rm.panel = repairPanel;
 
-        // Connect Cancel button
         UnityEditor.Events.UnityEventTools.AddPersistentListener(
             cancelBtn.onClick, rm.Cancel);
 
-        // GameHUD (on canvas)
         var hud = cGO.AddComponent<GameHUD>();
         hud.timerText      = timerTxt;
         hud.taskListParent = taskGO.transform;
-        hud.promptPanel    = promptGO;   // panel completo — el hijo Text lo muestra
+        hud.promptPanel    = promptGO;
         hud.promptText     = promptTxt;
         hud.endPanel       = endPanel;
         hud.endTitleText   = endTitle;
         hud.endSubText     = endSub;
 
-        // Connect Menu button
         UnityEditor.Events.UnityEventTools.AddPersistentListener(
             menuBtn.onClick, hud.ReturnToMenu);
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // ANIMATOR CONTROLLER — Idle / Walk states driven by "Moving" bool
+    // ANIMATOR CONTROLLER — Idle / Walk driven by "Moving" bool
     // ─────────────────────────────────────────────────────────────────────
     static AnimatorController GetOrCreateCaseritoController()
     {
@@ -388,29 +414,24 @@ public class GameSceneFixer
 
         var toWalk = idleState.AddTransition(walkState);
         toWalk.AddCondition(AnimatorConditionMode.If, 0, "Moving");
-        toWalk.hasExitTime = false;
-        toWalk.duration = 0.15f;
+        toWalk.hasExitTime = false; toWalk.duration = 0.15f;
 
         var toIdle = walkState.AddTransition(idleState);
         toIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "Moving");
-        toIdle.hasExitTime = false;
-        toIdle.duration = 0.15f;
+        toIdle.hasExitTime = false; toIdle.duration = 0.15f;
 
         AssetDatabase.SaveAssets();
         return ctrl;
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // CASERITO SPAWN  — builds full visual hierarchy at edit-time so models
-    // are visible in Scene view and in Play mode without runtime creation
+    // CASERITO SPAWN — unchanged, preserves all animations and logic
     // ─────────────────────────────────────────────────────────────────────
     static void SpawnCaserito(string goName, Vector3 position)
     {
-        // ── Root ──────────────────────────────────────────────────────────
         var root = new GameObject(goName);
         root.transform.position = position;
 
-        // ── Animated human model (replaces primitive capsule) ─────────────
         var ctrl = GetOrCreateCaseritoController();
         var modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Human@Idle.fbx");
         if (modelPrefab != null)
@@ -422,7 +443,6 @@ public class GameSceneFixer
             modelGO.transform.localRotation = Quaternion.identity;
             modelGO.transform.localScale    = Vector3.one;
 
-            // Root owns all colliders — strip any on the model children
             foreach (var col in modelGO.GetComponentsInChildren<Collider>())
                 Object.DestroyImmediate(col);
 
@@ -433,20 +453,18 @@ public class GameSceneFixer
         }
         else
         {
-            // Fallback: red capsule if FBX is missing
             var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Body";
             body.transform.SetParent(root.transform, false);
             body.transform.localPosition = new Vector3(0f, 1f, 0f);
             Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
-            var bodyMat = new Material(Shader.Find("Standard"));
-            bodyMat.color = new Color(0.28f, 0.02f, 0.02f);
-            bodyMat.SetFloat("_Metallic",   0.72f);
-            bodyMat.SetFloat("_Glossiness", 0.55f);
-            body.GetComponent<MeshRenderer>().sharedMaterial = bodyMat;
+            var bMat = new Material(Shader.Find("Standard"));
+            bMat.color = new Color(0.28f, 0.02f, 0.02f);
+            bMat.SetFloat("_Metallic",   0.72f);
+            bMat.SetFloat("_Glossiness", 0.55f);
+            body.GetComponent<MeshRenderer>().sharedMaterial = bMat;
         }
 
-        // ── Eye sphere (glows red when pursuing) ──────────────────────────
         var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         eye.name = "Eye";
         eye.transform.SetParent(root.transform, false);
@@ -460,18 +478,15 @@ public class GameSceneFixer
         eyeMat.SetColor("_EmissionColor", Color.black);
         eye.GetComponent<MeshRenderer>().sharedMaterial = eyeMat;
 
-        // ── Root colliders ────────────────────────────────────────────────
         var cap = root.AddComponent<CapsuleCollider>();
         cap.center = new Vector3(0f, 1f, 0f);
-        cap.radius = 0.45f;
-        cap.height = 2f;
+        cap.radius = 0.45f; cap.height = 2f;
 
         var trig = root.AddComponent<SphereCollider>();
         trig.center    = new Vector3(0f, 1f, 0f);
         trig.radius    = 1.1f;
         trig.isTrigger = true;
 
-        // ── Rigidbody — physics handles wall collisions ───────────────────
         var rb = root.AddComponent<Rigidbody>();
         rb.mass                   = 80f;
         rb.linearDamping          = 8f;
@@ -480,17 +495,101 @@ public class GameSceneFixer
         rb.constraints            = RigidbodyConstraints.FreezeRotation;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // [RequireComponent(Rigidbody)] already satisfied above
         root.AddComponent<Caserito>();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // LIGHT HELPERS
+    // ─────────────────────────────────────────────────────────────────────
+    static void WallNeon(string n, Vector3 pos, Color color, float intensity, float range)
+    {
+        var go = new GameObject(n);
+        go.transform.position = pos;
+        var l = go.AddComponent<Light>();
+        l.type = LightType.Point; l.color = color;
+        l.intensity = intensity; l.range = range;
+        var f = go.AddComponent<LightFlicker>();
+        f.normalIntensity = intensity;
+        f.minStableTime = 0.5f; f.maxStableTime = 3.5f;
+        f.flickerSpeed = 0.03f; f.maxFlickers = 5;
+    }
+
+    static void CeilStrip(string n, Vector3 pos, Material mat)
+    {
+        var strip = Box(n + "_Geo", pos, new Vector3(0.12f, 0.05f, 1.8f), mat);
+        Object.DestroyImmediate(strip.GetComponent<BoxCollider>());
+
+        foreach (float off in new[] { -0.7f, 0.7f })
+        {
+            var lg = new GameObject(n + "_Light" + (int)(off * 10));
+            lg.transform.position = pos - new Vector3(0f, 0.10f, -off);
+            var l = lg.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = new Color(0.60f, 0.72f, 0.30f);
+            l.intensity = 2.0f; l.range = 8f;
+            var f = lg.AddComponent<LightFlicker>();
+            f.normalIntensity = 2.0f; f.dimIntensity = 0.05f;
+            f.minStableTime = 0.5f; f.maxStableTime = 5f;
+            f.flickerSpeed = 0.04f; f.maxFlickers = 4;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // MATERIAL HELPERS
+    // ─────────────────────────────────────────────────────────────────────
+    static Material Upsert(string path, Color color, float metallic, float smoothness)
+    {
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null)
+        {
+            m = new Material(Shader.Find("Standard"))
+                { name = System.IO.Path.GetFileNameWithoutExtension(path) };
+            AssetDatabase.CreateAsset(m, path);
+        }
+        m.color = color;
+        m.SetFloat("_Metallic",   metallic);
+        m.SetFloat("_Glossiness", smoothness);
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    static void SetEmission(Material m, Color emission)
+    {
+        m.EnableKeyword("_EMISSION");
+        m.SetColor("_EmissionColor", emission);
+        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // GEOMETRY HELPERS
+    // ─────────────────────────────────────────────────────────────────────
+    static GameObject Box(string n, Vector3 pos, Vector3 scale, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = n;
+        go.transform.position   = pos;
+        go.transform.localScale = scale;
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
+    }
+
+    static GameObject BoxChild(GameObject parent, string suffix, Vector3 localPos, Vector3 scale, Material mat)
+    {
+        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        go.name = parent.name + suffix;
+        go.transform.SetParent(parent.transform);
+        go.transform.localPosition = localPos;
+        go.transform.localScale    = scale;
+        go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // UI HELPERS
     // ─────────────────────────────────────────────────────────────────────
-
     static GameObject Panel(string name, Transform parent, Vector2 ancMin, Vector2 ancMax, Color color)
     {
-        var go  = new GameObject(name);
+        var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         go.AddComponent<Image>().color = color;
@@ -549,86 +648,5 @@ public class GameSceneFixer
         if (rt == null) rt = go.AddComponent<RectTransform>();
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // SCENE HELPERS
-    // ─────────────────────────────────────────────────────────────────────
-
-    static void WallNeon(string n, Vector3 pos, Color color, float intensity, float range)
-    {
-        var go = new GameObject(n);
-        go.transform.position = pos;
-        var l = go.AddComponent<Light>();
-        l.type = LightType.Point; l.color = color;
-        l.intensity = intensity; l.range = range;
-        var f = go.AddComponent<LightFlicker>();
-        f.normalIntensity = intensity;
-        f.minStableTime = 0.5f; f.maxStableTime = 3.5f;
-        f.flickerSpeed = 0.03f; f.maxFlickers = 5;
-    }
-
-    static void CeilStrip(string n, Vector3 pos, Material mat)
-    {
-        var strip = Box(n + "_Geo", pos, new Vector3(0.12f, 0.05f, 1.8f), mat);
-        Object.DestroyImmediate(strip.GetComponent<BoxCollider>());
-
-        foreach (float off in new[] { -0.7f, 0.7f })
-        {
-            var lg = new GameObject(n + "_Light" + (int)(off * 10));
-            lg.transform.position = pos - new Vector3(0f, 0.10f, -off);
-            var l = lg.AddComponent<Light>();
-            l.type = LightType.Point;
-            l.color = new Color(0.60f, 0.72f, 0.30f);
-            l.intensity = 2.0f; l.range = 8f;
-            var f = lg.AddComponent<LightFlicker>();
-            f.normalIntensity = 2.0f; f.dimIntensity = 0.05f;
-            f.minStableTime = 0.5f; f.maxStableTime = 5f;
-            f.flickerSpeed = 0.04f; f.maxFlickers = 4;
-        }
-    }
-
-    static Material Upsert(string path, Color color, float metallic, float smoothness)
-    {
-        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (m == null)
-        {
-            m = new Material(Shader.Find("Standard"))
-                { name = System.IO.Path.GetFileNameWithoutExtension(path) };
-            AssetDatabase.CreateAsset(m, path);
-        }
-        m.color = color;
-        m.SetFloat("_Metallic",   metallic);
-        m.SetFloat("_Glossiness", smoothness);
-        EditorUtility.SetDirty(m);
-        return m;
-    }
-
-    static void SetEmission(Material m, Color emission)
-    {
-        m.EnableKeyword("_EMISSION");
-        m.SetColor("_EmissionColor", emission);
-        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-    }
-
-    static GameObject Box(string n, Vector3 pos, Vector3 scale, Material mat)
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = n;
-        go.transform.position   = pos;
-        go.transform.localScale = scale;
-        go.GetComponent<Renderer>().sharedMaterial = mat;
-        return go;
-    }
-
-    static GameObject BoxChild(GameObject parent, string suffix, Vector3 localPos, Vector3 scale, Material mat)
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        go.name = parent.name + suffix;
-        go.transform.SetParent(parent.transform);
-        go.transform.localPosition = localPos;
-        go.transform.localScale    = scale;
-        go.GetComponent<Renderer>().sharedMaterial = mat;
-        return go;
     }
 }

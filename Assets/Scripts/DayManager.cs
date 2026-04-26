@@ -20,11 +20,11 @@ public class DayManager : MonoBehaviour
     // Indexed by day-1
     static readonly DayConfig[] Configs =
     {
-        new DayConfig { caseritos = 2, machinesToBreak = 3, turnDuration = 300f },
-        new DayConfig { caseritos = 3, machinesToBreak = 4, turnDuration = 240f },
-        new DayConfig { caseritos = 4, machinesToBreak = 4, turnDuration = 240f },
-        new DayConfig { caseritos = 4, machinesToBreak = 5, turnDuration = 210f },
-        new DayConfig { caseritos = 5, machinesToBreak = 6, turnDuration = 180f },
+        new DayConfig { caseritos = 2, machinesToBreak = 3, turnDuration = 360f },
+        new DayConfig { caseritos = 3, machinesToBreak = 4, turnDuration = 300f },
+        new DayConfig { caseritos = 4, machinesToBreak = 5, turnDuration = 300f },
+        new DayConfig { caseritos = 4, machinesToBreak = 6, turnDuration = 270f },
+        new DayConfig { caseritos = 5, machinesToBreak = 8, turnDuration = 240f },
     };
 
     public DayConfig Config => Configs[CurrentDay - 1];
