@@ -29,7 +29,7 @@ public class RepairMinigame : MonoBehaviour
     public static bool IsActive { get; private set; }
 
     // State
-    SlotMachine   _target;
+    CasinoMachine _target;
     CablePlug     _dragging;
     CablePlug[]   _plugs;
     CableSocket[] _sockets;
@@ -186,7 +186,7 @@ public class RepairMinigame : MonoBehaviour
     }
 
     // ─── OPEN ─────────────────────────────────────────────────────────────
-    public void Open(SlotMachine machine)
+    public void Open(CasinoMachine machine)
     {
         EnsureUI();
         _target    = machine;

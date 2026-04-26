@@ -24,7 +24,7 @@ public class GameHUD : MonoBehaviour
     public Text       endSubText;
 
     Transform _player;
-    readonly List<(SlotMachine m, Text lbl)> _items = new();
+    readonly List<(CasinoMachine m, Text lbl)> _items = new();
 
     void Awake()
     {
@@ -63,19 +63,24 @@ public class GameHUD : MonoBehaviour
     {
         if (!promptPanel || !GameManager.Instance || !_player) return;
 
-        bool miniOpen = RepairMinigame.Instance != null
-                     && RepairMinigame.Instance.panel.activeSelf;
+        bool miniOpen = RepairMinigame.IsActive
+                     || RouletteMinigame.IsActive
+                     || CardMinigame.IsActive;
 
         if (miniOpen) { promptPanel.SetActive(false); return; }
 
-        SlotMachine nearby = null;
+        CasinoMachine nearby = null;
         foreach (var m in GameManager.Instance.brokenMachines)
             if (m.IsPlayerNearby(_player, 3.5f)) { nearby = m; break; }
 
         promptPanel.SetActive(nearby != null);
 
-        if (nearby != null && Input.GetKeyDown(KeyCode.E))
-            GameManager.Instance.StartRepair(nearby);
+        if (nearby != null)
+        {
+            if (promptText) promptText.text = nearby.InteractPrompt;
+            if (Input.GetKeyDown(KeyCode.E))
+                GameManager.Instance.StartRepair(nearby);
+        }
     }
 
     // ── Task Tablet ──────────────────────────────────────────────────────
@@ -103,7 +108,7 @@ public class GameHUD : MonoBehaviour
         }
     }
 
-    void SetTaskItem(Text txt, SlotMachine m)
+    void SetTaskItem(Text txt, CasinoMachine m)
     {
         bool broken = m.state == MachineState.Broken;
         txt.text      = (broken ? "[ ] " : "[✓] ") + m.machineName;

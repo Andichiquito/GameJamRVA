@@ -3,11 +3,12 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.UI;
 
+// Menu: Casino → Rebuild GameScene (Grand Casino)
 public class GameSceneFixer
 {
-    const float W = 9f, H = 3.2f, D = 28f;
+    const float RW = 50f, RH = 5f, RD = 60f;
 
-    [MenuItem("Casino/Rebuild GameScene (Night of Consumers)")]
+    [MenuItem("Casino/Rebuild GameScene (Grand Casino)")]
     public static void Execute()
     {
         if (EditorApplication.isPlaying) EditorApplication.isPlaying = false;
@@ -22,16 +23,25 @@ public class GameSceneFixer
         if (!AssetDatabase.IsValidFolder("Assets/Materials"))
             AssetDatabase.CreateFolder("Assets", "Materials");
 
-        var floorMat   = Upsert("Assets/Materials/CasinoFloor.mat",   new Color(0.22f, 0.07f, 0.03f), 0.0f, 0.10f);
-        var wallMat    = Upsert("Assets/Materials/CasinoWall.mat",    new Color(0.20f, 0.17f, 0.08f), 0.0f, 0.12f);
-        var ceilMat    = Upsert("Assets/Materials/CasinoCeiling.mat", new Color(0.04f, 0.03f, 0.02f), 0.0f, 0.08f);
-        var bodyMat    = Upsert("Assets/Materials/SlotBody.mat",      new Color(0.08f, 0.05f, 0.12f), 0.6f, 0.55f);
-        var trimMat    = Upsert("Assets/Materials/SlotTrim.mat",      new Color(0.60f, 0.44f, 0.02f), 0.9f, 0.85f);
-        var redMat     = Upsert("Assets/Materials/SlotRedTrim.mat",   new Color(0.80f, 0.04f, 0.04f), 0.8f, 0.70f);
-        var screenMat  = Upsert("Assets/Materials/SlotScreen.mat",    new Color(0.0f,  0.65f, 0.15f), 0.0f, 0.90f);
-        SetEmission(screenMat, new Color(0f, 1f, 0.2f) * 2.5f);
-        SetEmission(redMat,    new Color(1f, 0.04f, 0.04f) * 0.6f);
-        var stripMat = Upsert("Assets/Materials/LightStrip.mat", new Color(0.75f, 0.82f, 0.50f), 0.0f, 1.0f);
+        var floorMat      = Upsert("Assets/Materials/CasinoFloor.mat",     new Color(0.22f, 0.07f, 0.03f), 0.0f, 0.10f);
+        var wallMat       = Upsert("Assets/Materials/CasinoWall.mat",      new Color(0.20f, 0.17f, 0.08f), 0.0f, 0.12f);
+        var ceilMat       = Upsert("Assets/Materials/CasinoCeiling.mat",   new Color(0.04f, 0.03f, 0.02f), 0.0f, 0.08f);
+        var slotBodyMat   = Upsert("Assets/Materials/SlotBody.mat",        new Color(0.08f, 0.05f, 0.12f), 0.6f, 0.55f);
+        var slotTrimMat   = Upsert("Assets/Materials/SlotTrim.mat",        new Color(0.60f, 0.44f, 0.02f), 0.9f, 0.85f);
+        var slotRedMat    = Upsert("Assets/Materials/SlotRedTrim.mat",     new Color(0.80f, 0.04f, 0.04f), 0.8f, 0.70f);
+        var slotScreenMat = Upsert("Assets/Materials/SlotScreen.mat",      new Color(0.0f,  0.65f, 0.15f), 0.0f, 0.90f);
+        SetEmission(slotScreenMat, new Color(0f, 1f, 0.2f) * 2.5f);
+        SetEmission(slotRedMat,    new Color(1f, 0.04f, 0.04f) * 0.6f);
+
+        var tableBodyMat  = Upsert("Assets/Materials/TableBody.mat",       new Color(0.15f, 0.07f, 0.03f), 0.5f, 0.30f);
+        var rouletteFelt  = Upsert("Assets/Materials/RouletteFelt.mat",    new Color(0.04f, 0.28f, 0.07f), 0.0f, 0.15f);
+        var cardFelt      = Upsert("Assets/Materials/CardFelt.mat",        new Color(0.04f, 0.10f, 0.28f), 0.0f, 0.15f);
+        var wheelMat      = Upsert("Assets/Materials/RouletteWheel.mat",   new Color(0.55f, 0.45f, 0.10f), 0.8f, 0.70f);
+        var columnMat     = Upsert("Assets/Materials/Column.mat",          new Color(0.55f, 0.45f, 0.10f), 0.7f, 0.60f);
+        var slotZoneMat   = Upsert("Assets/Materials/SlotZonePad.mat",     new Color(0.30f, 0.05f, 0.04f), 0.0f, 0.05f);
+        var roulZoneMat   = Upsert("Assets/Materials/RouletteZonePad.mat", new Color(0.04f, 0.18f, 0.04f), 0.0f, 0.05f);
+        var cardZoneMat   = Upsert("Assets/Materials/CardZonePad.mat",     new Color(0.04f, 0.05f, 0.18f), 0.0f, 0.05f);
+        var stripMat      = Upsert("Assets/Materials/LightStrip.mat",      new Color(0.75f, 0.82f, 0.50f), 0.0f, 1.0f);
         SetEmission(stripMat, new Color(0.55f, 0.72f, 0.28f) * 2.2f);
         AssetDatabase.SaveAssets();
 
@@ -39,54 +49,97 @@ public class GameSceneFixer
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
         RenderSettings.ambientMode      = UnityEngine.Rendering.AmbientMode.Flat;
-        RenderSettings.ambientLight     = new Color(0.010f, 0.014f, 0.003f);
+        RenderSettings.ambientLight     = new Color(0.012f, 0.016f, 0.004f);
         RenderSettings.fog              = true;
-        RenderSettings.fogColor         = new Color(0.012f, 0.018f, 0.004f);
+        RenderSettings.fogColor         = new Color(0.010f, 0.014f, 0.003f);
         RenderSettings.fogMode          = FogMode.Linear;
-        RenderSettings.fogStartDistance = 3f;
-        RenderSettings.fogEndDistance   = 12f;
+        RenderSettings.fogStartDistance = 10f;
+        RenderSettings.fogEndDistance   = 42f;
 
-        // ── Room ──────────────────────────────────────────────────────────
-        Box("Floor",     new Vector3(0,  -0.5f,     0), new Vector3(W,   1f,   D),   floorMat);
-        Box("Ceiling",   new Vector3(0,  H + 0.5f,  0), new Vector3(W,   1f,   D),   ceilMat);
-        Box("WallLeft",  new Vector3(-W/2f-0.25f, H/2f, 0), new Vector3(0.5f, H+1f, D+1f), wallMat);
-        Box("WallRight", new Vector3( W/2f+0.25f, H/2f, 0), new Vector3(0.5f, H+1f, D+1f), wallMat);
-        Box("WallBack",  new Vector3(0, H/2f, -D/2f-0.25f), new Vector3(W+1f, H+1f, 0.5f), wallMat);
-        Box("WallFront", new Vector3(0, H/2f,  D/2f+0.25f), new Vector3(W+1f, H+1f, 0.5f), wallMat);
+        // ── Room shell ────────────────────────────────────────────────────
+        float hw = RW * 0.5f, hd = RD * 0.5f;
+        Box("Floor",     new Vector3(0,            -0.5f, 0),          new Vector3(RW,        1f,        RD),        floorMat);
+        Box("Ceiling",   new Vector3(0,   RH + 0.5f,     0),          new Vector3(RW,        1f,        RD),        ceilMat);
+        Box("WallLeft",  new Vector3(-hw - 0.25f,  RH * 0.5f, 0),     new Vector3(0.5f,  RH + 1f,  RD + 1f),  wallMat);
+        Box("WallRight", new Vector3( hw + 0.25f,  RH * 0.5f, 0),     new Vector3(0.5f,  RH + 1f,  RD + 1f),  wallMat);
+        Box("WallBack",  new Vector3(0,   RH * 0.5f, -hd - 0.25f),    new Vector3(RW + 1f, RH + 1f, 0.5f),    wallMat);
+        Box("WallFront", new Vector3(0,   RH * 0.5f,  hd + 0.25f),    new Vector3(RW + 1f, RH + 1f, 0.5f),    wallMat);
 
-        // ── 6 Slot Machines (3 pairs) ─────────────────────────────────────
-        float[] mZ = { -8f, 0f, 8f };
-        int     idx = 0;
-        foreach (float z in mZ)
+        // ── Zone floor pads (decorative, no collider) ─────────────────────
+        // Slot zone  : center column  X=-10..10  Z=-29..9
+        BoxDeco("SlotZonePad",     new Vector3(  0f, 0.01f, -10f), new Vector3(20f, 0.02f, 38f), slotZoneMat);
+        // Roulette   : west          X=-25..-10  Z=-15..15
+        BoxDeco("RouletteZonePad", new Vector3(-17f, 0.01f,   0f), new Vector3(15f, 0.02f, 30f), roulZoneMat);
+        // Cards      : east          X=10..25    Z=-15..15
+        BoxDeco("CardZonePad",     new Vector3( 17f, 0.01f,   0f), new Vector3(15f, 0.02f, 30f), cardZoneMat);
+
+        // ── Columns at zone boundaries (X = ±10) ─────────────────────────
+        float[] colZ = { -22f, -14f, -6f, 2f, 10f, 18f };
+        foreach (float z in colZ)
         {
-            SlotMachineGrouped("Machine_L" + (int)z, idx++, new Vector3(-3f, 0f, z), true,
-                bodyMat, trimMat, screenMat, redMat);
-            SlotMachineGrouped("Machine_R" + (int)z, idx++, new Vector3( 3f, 0f, z), false,
-                bodyMat, trimMat, screenMat, redMat);
+            Column("ColL" + (int)z, new Vector3(-10f, 0f, z), columnMat);
+            Column("ColR" + (int)z, new Vector3( 10f, 0f, z), columnMat);
         }
+
+        // ── 6 Slot Machines — 2 facing banks of 3 (indices 0-5) ──────────
+        float[] slotZ = { -20f, -12f, -4f };
+        int idx = 0;
+        foreach (float z in slotZ)
+        {
+            SlotMachineGrouped("SlotL" + (int)z, idx++, new Vector3(-3.5f, 0f, z), true,
+                slotBodyMat, slotTrimMat, slotScreenMat, slotRedMat);
+            SlotMachineGrouped("SlotR" + (int)z, idx++, new Vector3( 3.5f, 0f, z), false,
+                slotBodyMat, slotTrimMat, slotScreenMat, slotRedMat);
+        }
+
+        // ── 4 Roulette Tables — west zone (indices 6-9) ───────────────────
+        float[] rtX = { -14f, -20f };
+        float[] rtZ = {  -7f,   7f };
+        foreach (float rx in rtX)
+            foreach (float rz in rtZ)
+                RouletteTableGrouped("Roulette_" + (int)rx + "_" + (int)rz, idx++,
+                    new Vector3(rx, 0f, rz), tableBodyMat, rouletteFelt, wheelMat);
+
+        // ── 4 Card Tables — east zone (indices 10-13) ─────────────────────
+        float[] ctX = { 14f, 20f };
+        float[] ctZ = { -7f,  7f };
+        foreach (float cx in ctX)
+            foreach (float cz in ctZ)
+                CardTableGrouped("CardTable_" + (int)cx + "_" + (int)cz, idx++,
+                    new Vector3(cx, 0f, cz), tableBodyMat, cardFelt);
 
         // ── Wall neons ────────────────────────────────────────────────────
-        Color[] neons = {
-            new Color(1.0f, 0.06f, 0.06f),
-            new Color(0.90f, 0.55f, 0.0f),
-            new Color(0.85f, 0.08f, 0.75f),
-        };
-        float[] nZ = { -10f, -4f, 4f, 10f };
-        for (int i = 0; i < nZ.Length; i++)
+        Color[] neonPairs =
         {
-            WallNeon("NeonL" + i, new Vector3(-W/2f+0.3f, H-0.5f, nZ[i]), neons[i%3],       1.6f, 5f);
-            WallNeon("NeonR" + i, new Vector3( W/2f-0.3f, H-0.5f, nZ[i]), neons[(i+1)%3], 1.6f, 5f);
+            new Color(1.0f, 0.06f, 0.06f), new Color(0.85f, 0.08f, 0.75f), // L / R pair 0
+            new Color(0.90f, 0.55f, 0.00f), new Color(0.85f, 0.08f, 0.75f), // L / R pair 1
+        };
+        float[] wallNeonZ = { -26f, -18f, -10f, -2f, 6f, 14f, 22f };
+        for (int i = 0; i < wallNeonZ.Length; i++)
+        {
+            float z = wallNeonZ[i];
+            WallNeon("NeonL" + i, new Vector3(-hw + 0.3f, RH - 0.6f, z), neonPairs[i % 2],       1.8f, 7f);
+            WallNeon("NeonR" + i, new Vector3( hw - 0.3f, RH - 0.6f, z), neonPairs[(i % 2) + 0], 1.8f, 7f);
+        }
+        // Zone accent lights — mid-height green (roulette) and blue (cards)
+        float[] accentZ = { -10f, 0f, 10f };
+        for (int i = 0; i < accentZ.Length; i++)
+        {
+            WallNeon("AccentRL" + i, new Vector3(-hw + 0.3f, RH * 0.55f, accentZ[i]),
+                new Color(0.08f, 0.92f, 0.18f), 1.4f, 5f);
+            WallNeon("AccentCR" + i, new Vector3( hw - 0.3f, RH * 0.55f, accentZ[i]),
+                new Color(0.10f, 0.28f, 1.00f), 1.4f, 5f);
         }
 
-        // ── Ceiling strips ────────────────────────────────────────────────
-        float[] cZ = { -10f, -4f, 2f, 8f };
-        foreach (float z in cZ)
-            CeilStrip("Strip_" + (int)z, new Vector3(0f, H-0.05f, z), stripMat);
+        // ── Ceiling light strips ──────────────────────────────────────────
+        float[] stripZ = { -22f, -14f, -6f, 2f, 10f, 18f };
+        foreach (float z in stripZ)
+            CeilStrip("Strip" + (int)z, new Vector3(0f, RH - 0.05f, z), stripMat);
 
-        // ── Player ────────────────────────────────────────────────────────
+        // ── Player (starts near south entrance) ───────────────────────────
         var playerGO = new GameObject("Player");
         playerGO.tag = "Player";
-        playerGO.transform.position = new Vector3(0f, 1f, -12f);
+        playerGO.transform.position = new Vector3(0f, 1f, 24f);
 
         var cc = playerGO.AddComponent<CharacterController>();
         cc.height = 2f; cc.center = Vector3.zero;
@@ -99,29 +152,29 @@ public class GameSceneFixer
         camGO.transform.localPosition = new Vector3(0f, 0.7f, 0f);
         camGO.transform.localRotation = Quaternion.identity;
         var cam = camGO.AddComponent<Camera>();
-        cam.nearClipPlane = 0.08f; cam.farClipPlane = 30f; cam.fieldOfView = 80f;
+        cam.nearClipPlane = 0.08f; cam.farClipPlane = 50f; cam.fieldOfView = 80f;
         camGO.AddComponent<AudioListener>();
 
         // ── HUD + Game scripts ────────────────────────────────────────────
         BuildHUD();
 
-        // ── Caseritos (animatrónicos enemigos) ────────────────────────────
-        // Player starts at (0,1,-12). Machines at z=-8,0,8 x=±3.
-        // Place caseritos in the aisles — they activate after 4 seconds.
-        SpawnCaserito("Caserito_1", new Vector3( 0.5f, 0f, -5f));
-        SpawnCaserito("Caserito_2", new Vector3(-1.5f, 0f,  3f));
-        SpawnCaserito("Caserito_3", new Vector3( 1.0f, 0f, 11f));
+        // ── 5 Caseritos — GameManager activates only cfg.caseritos of them ──
+        SpawnCaserito("Caserito_1", new Vector3(  0f, 0f,  12f));   // center aisle
+        SpawnCaserito("Caserito_2", new Vector3( -5f, 0f,  -8f));   // slot zone
+        SpawnCaserito("Caserito_3", new Vector3(-16f, 0f,   3f));   // roulette zone
+        SpawnCaserito("Caserito_4", new Vector3( 16f, 0f,   3f));   // card zone
+        SpawnCaserito("Caserito_5", new Vector3(  2f, 0f, -22f));   // back slot zone
 
         // ── Save ──────────────────────────────────────────────────────────
         if (!AssetDatabase.IsValidFolder("Assets/Scenes"))
             AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, "Assets/Scenes/GameScene.unity");
         AssetDatabase.SaveAssets();
-        Debug.Log("[GameSceneFixer] GameScene reconstruida con sistema de reparación.");
+        Debug.Log("[GameSceneFixer] Grand Casino: 6 slots · 4 ruletas · 4 mesas de cartas · 5 caseritos.");
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // SLOT MACHINE — grouped under a parent with SlotMachine component
+    // SLOT MACHINE
     // ─────────────────────────────────────────────────────────────────────
     static void SlotMachineGrouped(string goName, int machineIdx, Vector3 basePos, bool facingPlusX,
         Material body, Material trim, Material screen, Material red)
@@ -135,18 +188,16 @@ public class GameSceneFixer
         sm.machineName  = "Máquina " + (machineIdx + 1);
         sm.machineIndex = machineIdx;
 
-        // Parts as children
-        BoxChild(parent, "_Base",  new Vector3(0f, 0.10f, 0f),    new Vector3(0.90f, 0.20f, 0.58f), body);
-        BoxChild(parent, "_Body",  new Vector3(0f, 1.20f, 0f),    new Vector3(0.80f, 2.00f, 0.50f), body);
-        BoxChild(parent, "_Cap",   new Vector3(0f, 2.25f, 0f),    new Vector3(0.82f, 0.12f, 0.52f), trim);
+        BoxChild(parent, "_Base",  new Vector3(0f, 0.10f, 0f),     new Vector3(0.90f, 0.20f, 0.58f), body);
+        BoxChild(parent, "_Body",  new Vector3(0f, 1.20f, 0f),     new Vector3(0.80f, 2.00f, 0.50f), body);
+        BoxChild(parent, "_Cap",   new Vector3(0f, 2.25f, 0f),     new Vector3(0.82f, 0.12f, 0.52f), trim);
         BoxChild(parent, "_TrimF", new Vector3(0f, 1.20f,  0.26f), new Vector3(0.82f, 2.02f, 0.02f), trim);
         BoxChild(parent, "_TrimB", new Vector3(0f, 1.20f, -0.26f), new Vector3(0.82f, 2.02f, 0.02f), trim);
-        BoxChild(parent, "_Red",   new Vector3(0f, 0.30f,  0f),   new Vector3(0.81f, 0.08f, 0.51f), red);
+        BoxChild(parent, "_Red",   new Vector3(0f, 0.30f,  0f),    new Vector3(0.81f, 0.08f, 0.51f), red);
 
         var scrOff = new Vector3(side * 0.41f, 1.3f, 0f);
         BoxChild(parent, "_Screen", scrOff, new Vector3(0.02f, 0.65f, 0.40f), screen);
 
-        // Screen light (green when working)
         var slGO = new GameObject("ScreenLight");
         slGO.transform.SetParent(parent.transform);
         slGO.transform.localPosition = scrOff + new Vector3(side * 0.35f, 0f, 0f);
@@ -155,15 +206,131 @@ public class GameSceneFixer
         sl.intensity = 0.8f; sl.range = 2.5f;
         sm.screenLight = sl;
 
-        // Neon sign above machine — starts disabled, enabled when broken
         var neonGO = new GameObject("NeonSign");
         neonGO.transform.SetParent(parent.transform);
-        neonGO.transform.position = basePos + new Vector3(0f, H - 0.35f, 0f);
+        neonGO.transform.localPosition = new Vector3(0f, RH - 0.5f, 0f);
         var nl = neonGO.AddComponent<Light>();
         nl.type = LightType.Point; nl.color = new Color(1f, 0.12f, 0f);
-        nl.intensity = 4f; nl.range = 3.5f;
+        nl.intensity = 4f; nl.range = 4f;
         neonGO.SetActive(false);
         sm.neonSign = nl;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ROULETTE TABLE
+    // ─────────────────────────────────────────────────────────────────────
+    static void RouletteTableGrouped(string goName, int machineIdx, Vector3 basePos,
+        Material body, Material felt, Material wheel)
+    {
+        var parent = new GameObject(goName);
+        parent.transform.position = basePos;
+
+        var rt = parent.AddComponent<RouletteTable>();
+        rt.machineName  = "Ruleta " + (machineIdx - 5);
+        rt.machineIndex = machineIdx;
+
+        // Four legs
+        int legN = 0;
+        foreach (float lx in new[] { -0.50f, 0.50f })
+            foreach (float lz in new[] { -1.00f, 1.00f })
+                BoxChild(parent, "_Leg" + legN++, new Vector3(lx, 0.36f, lz), new Vector3(0.13f, 0.72f, 0.13f), body);
+
+        BoxChild(parent, "_Apron", new Vector3(0f, 0.72f, 0f), new Vector3(1.30f, 0.08f, 2.50f), body);
+        BoxChild(parent, "_Felt",  new Vector3(0f, 0.76f, 0f), new Vector3(1.20f, 0.04f, 2.40f), felt);
+
+        // Decorative roulette wheel (flat cylinder)
+        var wheelGO = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        wheelGO.name = goName + "_Wheel";
+        wheelGO.transform.SetParent(parent.transform);
+        wheelGO.transform.localPosition = new Vector3(0f, 0.82f, -0.90f);
+        wheelGO.transform.localScale    = new Vector3(0.52f, 0.04f, 0.52f);
+        Object.DestroyImmediate(wheelGO.GetComponent<CapsuleCollider>());
+        wheelGO.GetComponent<MeshRenderer>().sharedMaterial = wheel;
+
+        var slGO = new GameObject("ScreenLight");
+        slGO.transform.SetParent(parent.transform);
+        slGO.transform.localPosition = new Vector3(0f, 1.3f, 0f);
+        var sl = slGO.AddComponent<Light>();
+        sl.type = LightType.Point; sl.color = new Color(0.10f, 0.85f, 0.20f);
+        sl.intensity = 0.7f; sl.range = 2.8f;
+        rt.screenLight = sl;
+
+        var neonGO = new GameObject("NeonSign");
+        neonGO.transform.SetParent(parent.transform);
+        neonGO.transform.localPosition = new Vector3(0f, RH - 0.5f, 0f);
+        var nl = neonGO.AddComponent<Light>();
+        nl.type = LightType.Point; nl.color = new Color(0.08f, 1f, 0.15f);
+        nl.intensity = 4f; nl.range = 4f;
+        neonGO.SetActive(false);
+        rt.neonSign = nl;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // CARD TABLE
+    // ─────────────────────────────────────────────────────────────────────
+    static void CardTableGrouped(string goName, int machineIdx, Vector3 basePos,
+        Material body, Material felt)
+    {
+        var parent = new GameObject(goName);
+        parent.transform.position = basePos;
+
+        var ct = parent.AddComponent<CardTable>();
+        ct.machineName  = "Mesa de Cartas " + (machineIdx - 9);
+        ct.machineIndex = machineIdx;
+
+        // Four legs
+        int legN = 0;
+        foreach (float lx in new[] { -0.65f, 0.65f })
+            foreach (float lz in new[] { -0.90f, 0.90f })
+                BoxChild(parent, "_Leg" + legN++, new Vector3(lx, 0.36f, lz), new Vector3(0.13f, 0.72f, 0.13f), body);
+
+        BoxChild(parent, "_Apron", new Vector3(0f, 0.72f, 0f), new Vector3(1.55f, 0.08f, 2.10f), body);
+        BoxChild(parent, "_Felt",  new Vector3(0f, 0.76f, 0f), new Vector3(1.45f, 0.04f, 2.00f), felt);
+
+        // Decorative card deck
+        var deckMat = new Material(Shader.Find("Standard"));
+        deckMat.color = new Color(0.95f, 0.93f, 0.88f);
+        var deckGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        deckGO.name = goName + "_Deck";
+        deckGO.transform.SetParent(parent.transform);
+        deckGO.transform.localPosition = new Vector3(0.30f, 0.82f, 0.55f);
+        deckGO.transform.localScale    = new Vector3(0.10f, 0.06f, 0.14f);
+        Object.DestroyImmediate(deckGO.GetComponent<BoxCollider>());
+        deckGO.GetComponent<MeshRenderer>().sharedMaterial = deckMat;
+
+        var slGO = new GameObject("ScreenLight");
+        slGO.transform.SetParent(parent.transform);
+        slGO.transform.localPosition = new Vector3(0f, 1.3f, 0f);
+        var sl = slGO.AddComponent<Light>();
+        sl.type = LightType.Point; sl.color = new Color(0.15f, 0.30f, 0.95f);
+        sl.intensity = 0.7f; sl.range = 2.8f;
+        ct.screenLight = sl;
+
+        var neonGO = new GameObject("NeonSign");
+        neonGO.transform.SetParent(parent.transform);
+        neonGO.transform.localPosition = new Vector3(0f, RH - 0.5f, 0f);
+        var nl = neonGO.AddComponent<Light>();
+        nl.type = LightType.Point; nl.color = new Color(0.10f, 0.20f, 1f);
+        nl.intensity = 4f; nl.range = 4f;
+        neonGO.SetActive(false);
+        ct.neonSign = nl;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // COLUMN
+    // ─────────────────────────────────────────────────────────────────────
+    static void Column(string n, Vector3 basePos, Material mat)
+    {
+        Box(n + "_Shaft",   basePos + new Vector3(0f, RH * 0.5f, 0f), new Vector3(0.50f, RH,   0.50f), mat);
+        Box(n + "_Capital", basePos + new Vector3(0f, RH - 0.1f, 0f), new Vector3(0.70f, 0.3f, 0.70f), mat);
+        Box(n + "_Base",    basePos + new Vector3(0f, 0.15f,     0f), new Vector3(0.70f, 0.3f, 0.70f), mat);
+
+        var lg = new GameObject(n + "_Light");
+        lg.transform.position = basePos + new Vector3(0f, RH + 0.3f, 0f);
+        var l = lg.AddComponent<Light>();
+        l.type = LightType.Point;
+        l.color = new Color(0.85f, 0.72f, 0.25f);
+        l.intensity = 1.2f; l.range = 5f;
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -176,33 +343,30 @@ public class GameSceneFixer
         // ── Canvas ────────────────────────────────────────────────────────
         var cGO = new GameObject("HUDCanvas");
         var canvas = cGO.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 10;
         var cs = cGO.AddComponent<CanvasScaler>();
-        cs.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        cs.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         cs.referenceResolution = new Vector2(1920, 1080);
-        cs.matchWidthOrHeight = 0.5f;
+        cs.matchWidthOrHeight  = 0.5f;
         cGO.AddComponent<GraphicRaycaster>();
 
-        // EventSystem
         var esGO = new GameObject("EventSystem");
         esGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
         esGO.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
-        // ── Timer panel (top center) ──────────────────────────────────────
-        var timerBg = Panel("TimerBg", cGO.transform,
-            new Vector2(0.38f, 0.93f), new Vector2(0.62f, 1.0f),
+        // Timer panel — top center
+        var timerBg  = Panel("TimerBg", cGO.transform,
+            new Vector2(0.38f, 0.93f), new Vector2(0.62f, 1.00f),
             new Color(0.04f, 0.03f, 0.02f, 0.88f));
         var timerTxt = Label("TimerText", timerBg.transform,
             Vector2.zero, Vector2.one, "05:00",
             new Color(0.92f, 0.80f, 0.08f), 44, FontStyle.Bold, font);
-        timerBg.GetComponent<Image>().color = new Color(0.04f, 0.03f, 0.02f, 0.88f);
 
-        // ── Tablet panel (bottom right) ───────────────────────────────────
-        var tabletBezel = Panel("Tablet", cGO.transform,
+        // Tablet panel — bottom right
+        var tabletBezel  = Panel("Tablet", cGO.transform,
             new Vector2(0.75f, 0.01f), new Vector2(0.99f, 0.32f),
             new Color(0.12f, 0.10f, 0.06f, 0.96f));
-        // Inner screen
         var tabletScreen = Panel("TabletScreen", tabletBezel.transform,
             new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.97f),
             new Color(0.02f, 0.06f, 0.02f, 1f));
@@ -210,10 +374,10 @@ public class GameSceneFixer
             new Vector2(0f, 0.84f), new Vector2(1f, 1f),
             "TABLETA DE TURNO",
             new Color(0.38f, 0.70f, 0.28f), 13, FontStyle.Bold, font);
-        var divider = Panel("Divider", tabletScreen.transform,
+        Panel("Divider", tabletScreen.transform,
             new Vector2(0.02f, 0.82f), new Vector2(0.98f, 0.835f),
             new Color(0.25f, 0.50f, 0.18f, 0.8f));
-        // Task list with VerticalLayoutGroup
+
         var taskGO = new GameObject("TaskList");
         taskGO.transform.SetParent(tabletScreen.transform, false);
         var taskRT = taskGO.AddComponent<RectTransform>();
@@ -221,212 +385,118 @@ public class GameSceneFixer
         taskRT.anchorMax = new Vector2(0.96f, 0.80f);
         taskRT.offsetMin = taskRT.offsetMax = Vector2.zero;
         var vlg = taskGO.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 4f; vlg.childForceExpandWidth = true;
+        vlg.spacing = 4f;
+        vlg.childForceExpandWidth  = true;
         vlg.childForceExpandHeight = false;
         vlg.padding = new RectOffset(4, 4, 4, 4);
 
-        // ── Prompt (center bottom) ─────────────────────────────────────────
-        var promptGO = Panel("PromptPanel", cGO.transform,
+        // Interaction prompt — center bottom
+        var promptGO  = Panel("PromptPanel", cGO.transform,
             new Vector2(0.28f, 0.08f), new Vector2(0.72f, 0.16f),
             new Color(0.02f, 0.02f, 0.01f, 0.80f));
         var promptTxt = Label("PromptText", promptGO.transform,
-            Vector2.zero, Vector2.one,
-            "[E]  Reparar máquina",
+            Vector2.zero, Vector2.one, "[E]  Reparar",
             new Color(0.85f, 0.78f, 0.20f), 24, FontStyle.Bold, font);
         promptGO.SetActive(false);
 
-        // ── Repair Panel (full screen overlay) ────────────────────────────
+        // RepairMinigame container — EnsureUI() builds the rest on first Open()
         var repairPanel = new GameObject("RepairPanel");
         repairPanel.transform.SetParent(cGO.transform, false);
         FullScreen(repairPanel);
-
-        // Dark overlay
-        var darkener = Panel("Darkener", repairPanel.transform,
-            Vector2.zero, Vector2.one, new Color(0f, 0f, 0f, 0.82f));
-
-        // Repair window
-        var repairWin = Panel("RepairWindow", repairPanel.transform,
-            new Vector2(0.22f, 0.22f), new Vector2(0.78f, 0.78f),
-            new Color(0.06f, 0.05f, 0.02f, 0.97f));
-
-        Label("RepairTitle", repairWin.transform,
-            new Vector2(0f, 0.82f), new Vector2(1f, 1f),
-            "PANEL DE REPARACIÓN",
-            new Color(0.92f, 0.80f, 0.08f), 28, FontStyle.Bold, font);
-
-        // Cables row
-        var cablesRow = new GameObject("CablesRow");
-        cablesRow.transform.SetParent(repairWin.transform, false);
-        Anchor(cablesRow, new Vector2(0.05f, 0.45f), new Vector2(0.95f, 0.78f));
-        var hlg = cablesRow.AddComponent<HorizontalLayoutGroup>();
-        hlg.spacing = 16f; hlg.childForceExpandWidth = true;
-        hlg.childForceExpandHeight = true;
-        hlg.padding = new RectOffset(8, 8, 4, 4);
-
-        var cableBtns = new Button[3];
-        for (int i = 0; i < 3; i++)
-        {
-            var btnGO = new GameObject("CableBtn" + i);
-            btnGO.transform.SetParent(cablesRow.transform, false);
-            var btnImg = btnGO.AddComponent<Image>();
-            btnImg.color = Color.grey; // set at runtime by RepairMinigame
-            var btn = btnGO.AddComponent<Button>();
-            var col = btn.colors;
-            col.pressedColor = new Color(0.6f, 0.6f, 0.6f); btn.colors = col;
-
-            var lblGO = new GameObject("Label");
-            lblGO.transform.SetParent(btnGO.transform, false);
-            Anchor(lblGO, Vector2.zero, Vector2.one);
-            var lbl = lblGO.AddComponent<Text>();
-            lbl.font = font; lbl.fontSize = 20; lbl.fontStyle = FontStyle.Bold;
-            lbl.alignment = TextAnchor.MiddleCenter;
-            lbl.color = Color.white;
-            lbl.text = "---";
-
-            cableBtns[i] = btn;
-        }
-
-        var progressTxt = Label("ProgressText", repairWin.transform,
-            new Vector2(0f, 0.28f), new Vector2(1f, 0.44f),
-            "Conecta en orden: ROJO → AMARILLO → AZUL",
-            new Color(0.72f, 0.88f, 0.32f), 16, FontStyle.Normal, font);
-
-        var cancelBtn = MakeButton("CancelBtn", repairWin.transform,
-            new Vector2(0.30f, 0.05f), new Vector2(0.70f, 0.22f),
-            "CANCELAR  [ESC]",
-            new Color(0.30f, 0.08f, 0.04f), new Color(0.6f, 0.5f, 0.3f), font, 18);
-
         repairPanel.SetActive(false);
 
-        // ── End Panel (full screen) ────────────────────────────────────────
+        // End panel — full screen
         var endPanel = new GameObject("EndPanel");
         endPanel.transform.SetParent(cGO.transform, false);
         FullScreen(endPanel);
-
         Panel("Darkener", endPanel.transform, Vector2.zero, Vector2.one,
             new Color(0f, 0f, 0f, 0.88f));
-
-        var endWin = Panel("EndWindow", endPanel.transform,
+        var endWin    = Panel("EndWindow", endPanel.transform,
             new Vector2(0.25f, 0.28f), new Vector2(0.75f, 0.72f),
             new Color(0.05f, 0.04f, 0.02f, 0.97f));
-
-        var endTitle = Label("EndTitle", endWin.transform,
+        var endTitle  = Label("EndTitle", endWin.transform,
             new Vector2(0f, 0.68f), new Vector2(1f, 1f),
             "TURNO COMPLETADO",
             new Color(0.92f, 0.80f, 0.08f), 40, FontStyle.Bold, font);
-
-        var endSub = Label("EndSub", endWin.transform,
+        var endSub    = Label("EndSub", endWin.transform,
             new Vector2(0.05f, 0.30f), new Vector2(0.95f, 0.65f),
-            "...",
-            new Color(0.70f, 0.60f, 0.40f), 20, FontStyle.Normal, font);
-
-        var menuBtn = MakeButton("MenuBtn", endWin.transform,
+            "...", new Color(0.70f, 0.60f, 0.40f), 20, FontStyle.Normal, font);
+        var menuBtn   = MakeButton("MenuBtn", endWin.transform,
             new Vector2(0.25f, 0.06f), new Vector2(0.75f, 0.24f),
             "VOLVER AL MENÚ",
             new Color(0.40f, 0.12f, 0.04f), new Color(0.92f, 0.80f, 0.20f), font, 22);
-
         endPanel.SetActive(false);
 
-        // ── Runtime scripts ───────────────────────────────────────────────
+        // Runtime scripts
+        new GameObject("GameManager").AddComponent<GameManager>();
 
-        // GameManager
-        var gmGO = new GameObject("GameManager");
-        var gm = gmGO.AddComponent<GameManager>();
-        gm.turnDuration = 300f;
-
-        // RepairMinigame va en HUDCanvas (siempre activo) para que Awake() corra.
-        // repairPanel empieza inactivo pero la referencia rm.panel lo activa al abrir.
-        var rm = cGO.AddComponent<RepairMinigame>();
+        var rm  = cGO.AddComponent<RepairMinigame>();
         rm.panel = repairPanel;
 
-        // Connect Cancel button
-        UnityEditor.Events.UnityEventTools.AddPersistentListener(
-            cancelBtn.onClick, rm.Cancel);
-
-        // GameHUD (on canvas)
         var hud = cGO.AddComponent<GameHUD>();
         hud.timerText      = timerTxt;
         hud.taskListParent = taskGO.transform;
-        hud.promptPanel    = promptGO;   // panel completo — el hijo Text lo muestra
+        hud.promptPanel    = promptGO;
         hud.promptText     = promptTxt;
         hud.endPanel       = endPanel;
         hud.endTitleText   = endTitle;
         hud.endSubText     = endSub;
 
-        // Connect Menu button
-        UnityEditor.Events.UnityEventTools.AddPersistentListener(
-            menuBtn.onClick, hud.ReturnToMenu);
+        UnityEditor.Events.UnityEventTools.AddPersistentListener(menuBtn.onClick, hud.ReturnToMenu);
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // CASERITO SPAWN  — builds full visual hierarchy at edit-time so models
-    // are visible in Scene view and in Play mode without runtime creation
+    // CASERITO
     // ─────────────────────────────────────────────────────────────────────
     static void SpawnCaserito(string goName, Vector3 position)
     {
-        // ── Root ──────────────────────────────────────────────────────────
         var root = new GameObject(goName);
         root.transform.position = position;
 
-        // ── Body capsule ──────────────────────────────────────────────────
         var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(root.transform, false);
         body.transform.localPosition = new Vector3(0f, 1f, 0f);
-        Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());   // root owns colliders
-
+        Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
         var bodyMat = new Material(Shader.Find("Standard"));
         bodyMat.color = new Color(0.28f, 0.02f, 0.02f);
-        bodyMat.SetFloat("_Metallic",    0.72f);
-        bodyMat.SetFloat("_Glossiness",  0.55f);
+        bodyMat.SetFloat("_Metallic",   0.72f);
+        bodyMat.SetFloat("_Glossiness", 0.55f);
         body.GetComponent<MeshRenderer>().sharedMaterial = bodyMat;
 
-        // ── Eye sphere ────────────────────────────────────────────────────
         var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         eye.name = "Eye";
         eye.transform.SetParent(root.transform, false);
-        eye.transform.localPosition = new Vector3(0f, 1.55f, 0.53f);  // past capsule radius (0.5)
+        eye.transform.localPosition = new Vector3(0f, 1.55f, 0.53f);
         eye.transform.localScale    = new Vector3(0.26f, 0.26f, 0.26f);
         Object.DestroyImmediate(eye.GetComponent<SphereCollider>());
-
         var eyeMat = new Material(Shader.Find("Standard"));
-        eyeMat.color = new Color(0.12f, 0.0f, 0.0f);
+        eyeMat.color = new Color(0.12f, 0f, 0f);
         eyeMat.EnableKeyword("_EMISSION");
-        eyeMat.SetColor("_EmissionColor", Color.black);   // off at start
+        eyeMat.SetColor("_EmissionColor", Color.black);
         eye.GetComponent<MeshRenderer>().sharedMaterial = eyeMat;
 
-        // ── Root colliders ────────────────────────────────────────────────
         var cap = root.AddComponent<CapsuleCollider>();
-        cap.center = new Vector3(0f, 1f, 0f);
-        cap.radius = 0.45f;
-        cap.height = 2f;
+        cap.center = new Vector3(0f, 1f, 0f); cap.radius = 0.45f; cap.height = 2f;
 
         var trig = root.AddComponent<SphereCollider>();
-        trig.center    = new Vector3(0f, 1f, 0f);
-        trig.radius    = 1.1f;
-        trig.isTrigger = true;
+        trig.center = new Vector3(0f, 1f, 0f); trig.radius = 1.1f; trig.isTrigger = true;
 
-        // ── Rigidbody — physics handles wall collisions ───────────────────
         var rb = root.AddComponent<Rigidbody>();
-        rb.mass                   = 80f;
-        rb.linearDamping          = 8f;
-        rb.angularDamping         = 999f;
-        rb.useGravity             = true;
-        rb.constraints            = RigidbodyConstraints.FreezeRotation;
+        rb.mass = 80f; rb.linearDamping = 8f; rb.angularDamping = 999f;
+        rb.useGravity = true;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // ── Behavior script ───────────────────────────────────────────────
-        // [RequireComponent(Rigidbody)] already satisfied above
         root.AddComponent<Caserito>();
     }
 
     // ─────────────────────────────────────────────────────────────────────
     // UI HELPERS
     // ─────────────────────────────────────────────────────────────────────
-
     static GameObject Panel(string name, Transform parent, Vector2 ancMin, Vector2 ancMax, Color color)
     {
-        var go  = new GameObject(name);
+        var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         go.AddComponent<Image>().color = color;
@@ -441,8 +511,8 @@ public class GameSceneFixer
         go.transform.SetParent(parent, false);
         Anchor(go, ancMin, ancMax);
         var txt = go.AddComponent<Text>();
-        txt.font = font; txt.fontSize = size; txt.fontStyle = style;
-        txt.color = color; txt.text = text;
+        txt.font      = font; txt.fontSize = size; txt.fontStyle = style;
+        txt.color     = color; txt.text = text;
         txt.alignment = TextAnchor.MiddleCenter;
         return txt;
     }
@@ -458,31 +528,31 @@ public class GameSceneFixer
         img.color = bgColor;
         var btn = go.AddComponent<Button>();
         var c = btn.colors;
-        c.normalColor = bgColor; c.highlightedColor = bgColor * 1.4f;
-        c.pressedColor = bgColor * 0.7f; btn.colors = c;
+        c.normalColor      = bgColor;
+        c.highlightedColor = bgColor * 1.4f;
+        c.pressedColor     = bgColor * 0.7f;
+        btn.colors = c;
 
-        var lblGO = new GameObject("Label");
-        lblGO.transform.SetParent(go.transform, false);
-        Anchor(lblGO, Vector2.zero, Vector2.one);
-        var txt = lblGO.AddComponent<Text>();
-        txt.font = font; txt.fontSize = fontSize; txt.fontStyle = FontStyle.Bold;
-        txt.color = textColor; txt.text = label;
+        var lgo = new GameObject("Label");
+        lgo.transform.SetParent(go.transform, false);
+        Anchor(lgo, Vector2.zero, Vector2.one);
+        var txt = lgo.AddComponent<Text>();
+        txt.font      = font; txt.fontSize = fontSize; txt.fontStyle = FontStyle.Bold;
+        txt.color     = textColor; txt.text = label;
         txt.alignment = TextAnchor.MiddleCenter;
         return btn;
     }
 
     static void Anchor(GameObject go, Vector2 min, Vector2 max)
     {
-        var rt = go.GetComponent<RectTransform>();
-        if (rt == null) rt = go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>() ?? go.AddComponent<RectTransform>();
         rt.anchorMin = min; rt.anchorMax = max;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
     }
 
     static void FullScreen(GameObject go)
     {
-        var rt = go.GetComponent<RectTransform>();
-        if (rt == null) rt = go.AddComponent<RectTransform>();
+        var rt = go.GetComponent<RectTransform>() ?? go.AddComponent<RectTransform>();
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;
         rt.offsetMin = rt.offsetMax = Vector2.zero;
     }
@@ -490,7 +560,6 @@ public class GameSceneFixer
     // ─────────────────────────────────────────────────────────────────────
     // SCENE HELPERS
     // ─────────────────────────────────────────────────────────────────────
-
     static void WallNeon(string n, Vector3 pos, Color color, float intensity, float range)
     {
         var go = new GameObject(n);
@@ -500,8 +569,8 @@ public class GameSceneFixer
         l.intensity = intensity; l.range = range;
         var f = go.AddComponent<LightFlicker>();
         f.normalIntensity = intensity;
-        f.minStableTime = 0.5f; f.maxStableTime = 3.5f;
-        f.flickerSpeed = 0.03f; f.maxFlickers = 5;
+        f.minStableTime   = 0.5f; f.maxStableTime = 3.5f;
+        f.flickerSpeed    = 0.03f; f.maxFlickers   = 5;
     }
 
     static void CeilStrip(string n, Vector3 pos, Material mat)
@@ -512,15 +581,15 @@ public class GameSceneFixer
         foreach (float off in new[] { -0.7f, 0.7f })
         {
             var lg = new GameObject(n + "_Light" + (int)(off * 10));
-            lg.transform.position = pos - new Vector3(0f, 0.10f, -off);
+            lg.transform.position = pos + new Vector3(0f, -0.10f, off);
             var l = lg.AddComponent<Light>();
             l.type = LightType.Point;
             l.color = new Color(0.60f, 0.72f, 0.30f);
-            l.intensity = 2.0f; l.range = 8f;
+            l.intensity = 2.0f; l.range = 10f;
             var f = lg.AddComponent<LightFlicker>();
-            f.normalIntensity = 2.0f; f.dimIntensity = 0.05f;
-            f.minStableTime = 0.5f; f.maxStableTime = 5f;
-            f.flickerSpeed = 0.04f; f.maxFlickers = 4;
+            f.normalIntensity = 2.0f; f.dimIntensity  = 0.05f;
+            f.minStableTime   = 0.5f; f.maxStableTime = 5f;
+            f.flickerSpeed    = 0.04f; f.maxFlickers   = 4;
         }
     }
 
@@ -554,6 +623,13 @@ public class GameSceneFixer
         go.transform.position   = pos;
         go.transform.localScale = scale;
         go.GetComponent<Renderer>().sharedMaterial = mat;
+        return go;
+    }
+
+    static GameObject BoxDeco(string n, Vector3 pos, Vector3 scale, Material mat)
+    {
+        var go = Box(n, pos, scale, mat);
+        Object.DestroyImmediate(go.GetComponent<BoxCollider>());
         return go;
     }
 

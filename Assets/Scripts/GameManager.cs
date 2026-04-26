@@ -10,11 +10,11 @@ public class GameManager : MonoBehaviour
     public float turnDuration = 300f;  // 5 minutos
 
     // All machines in the scene, sorted by machineIndex
-    [HideInInspector] public List<SlotMachine> allMachines      = new();
+    [HideInInspector] public List<CasinoMachine> allMachines      = new();
     // Subset that started broken (for task list)
-    [HideInInspector] public List<SlotMachine> initialBroken    = new();
+    [HideInInspector] public List<CasinoMachine> initialBroken    = new();
     // Subset still broken
-    [HideInInspector] public List<SlotMachine> brokenMachines   = new();
+    [HideInInspector] public List<CasinoMachine> brokenMachines   = new();
 
     float _timeLeft;
     bool  _ended;
@@ -39,7 +39,8 @@ public class GameManager : MonoBehaviour
         var cfg   = DayManager.Instance.Config;
         _timeLeft = cfg.turnDuration;
 
-        allMachines.AddRange(FindObjectsByType<SlotMachine>(FindObjectsSortMode.None));
+        allMachines.AddRange(FindObjectsByType<CasinoMachine>(
+            FindObjectsInactive.Exclude, FindObjectsSortMode.None));
         allMachines.Sort((a, b) => a.machineIndex.CompareTo(b.machineIndex));
 
         SetupCaseritos(cfg.caseritos);
@@ -66,7 +67,7 @@ public class GameManager : MonoBehaviour
 
     void BreakRandom(int count)
     {
-        var pool = new List<SlotMachine>(allMachines);
+        var pool = new List<CasinoMachine>(allMachines);
         for (int i = pool.Count - 1; i > 0; i--)
         {
             int j = Random.Range(0, i + 1);
@@ -88,10 +89,27 @@ public class GameManager : MonoBehaviour
         if (_timeLeft <= 0f) TriggerEnd(won: false);
     }
 
-    public void StartRepair(SlotMachine machine)
-        => RepairMinigame.Instance?.Open(machine);
+    public void StartRepair(CasinoMachine machine)
+    {
+        if (machine is RouletteTable)
+        {
+            if (RouletteMinigame.Instance == null)
+                new GameObject("RouletteMinigame").AddComponent<RouletteMinigame>();
+            RouletteMinigame.Instance.Open(machine);
+        }
+        else if (machine is CardTable)
+        {
+            if (CardMinigame.Instance == null)
+                new GameObject("CardMinigame").AddComponent<CardMinigame>();
+            CardMinigame.Instance.Open(machine);
+        }
+        else
+        {
+            RepairMinigame.Instance?.Open(machine);
+        }
+    }
 
-    public void NotifyRepaired(SlotMachine machine)
+    public void NotifyRepaired(CasinoMachine machine)
     {
         brokenMachines.Remove(machine);
         GameHUD.Instance?.RefreshTaskList();
@@ -105,6 +123,8 @@ public class GameManager : MonoBehaviour
         if (_ended) return;
         _ended = true;
         RepairMinigame.Instance?.Cancel();
+        RouletteMinigame.Instance?.Cancel();
+        CardMinigame.Instance?.Cancel();
         Invoke(nameof(ShowCaught), 0.3f);
     }
     void ShowCaught()

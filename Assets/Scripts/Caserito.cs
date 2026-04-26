@@ -214,7 +214,8 @@ public class Caserito : MonoBehaviour
     bool IsBeingWatched()
     {
         if (_cam == null) return false;
-        float halfFov  = (RepairMinigame.IsActive ? repairFov : watchFov) * 0.5f;
+        bool anyMini   = RepairMinigame.IsActive || RouletteMinigame.IsActive || CardMinigame.IsActive;
+        float halfFov  = (anyMini ? repairFov : watchFov) * 0.5f;
         Vector3 camPos = _cam.transform.position;
         Vector3 target = transform.position + Vector3.up * 1.4f;
         Vector3 dir    = target - camPos;
@@ -261,7 +262,8 @@ public class Caserito : MonoBehaviour
         if (_state == State.Moving)
         {
             Vector3 dir   = FlatDir(_player.position - transform.position);
-            float   speed = RepairMinigame.IsActive ? moveSpeed * 0.18f : moveSpeed;
+            bool    mini  = RepairMinigame.IsActive || RouletteMinigame.IsActive || CardMinigame.IsActive;
+            float   speed = mini ? moveSpeed * 0.18f : moveSpeed;
             if (dir.sqrMagnitude > 0.01f)
                 _rb.linearVelocity = dir * speed + Vector3.up * vy;
         }
