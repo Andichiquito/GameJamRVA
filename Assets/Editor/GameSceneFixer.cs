@@ -109,17 +109,16 @@ public class GameSceneFixer
                     new Vector3(cx, 0f, cz), tableBodyMat, cardFelt);
 
         // ── Wall neons ────────────────────────────────────────────────────
-        Color[] neonPairs =
-        {
-            new Color(1.0f, 0.06f, 0.06f), new Color(0.85f, 0.08f, 0.75f), // L / R pair 0
-            new Color(0.90f, 0.55f, 0.00f), new Color(0.85f, 0.08f, 0.75f), // L / R pair 1
-        };
+        // Left wall  alternates red / amber
+        // Right wall alternates pink / purple
+        Color[] neonL = { new Color(1.0f, 0.06f, 0.06f), new Color(0.90f, 0.55f, 0.00f) };
+        Color[] neonR = { new Color(0.85f, 0.08f, 0.75f), new Color(0.55f, 0.06f, 0.95f) };
         float[] wallNeonZ = { -26f, -18f, -10f, -2f, 6f, 14f, 22f };
         for (int i = 0; i < wallNeonZ.Length; i++)
         {
             float z = wallNeonZ[i];
-            WallNeon("NeonL" + i, new Vector3(-hw + 0.3f, RH - 0.6f, z), neonPairs[i % 2],       1.8f, 7f);
-            WallNeon("NeonR" + i, new Vector3( hw - 0.3f, RH - 0.6f, z), neonPairs[(i % 2) + 0], 1.8f, 7f);
+            WallNeon("NeonL" + i, new Vector3(-hw + 0.3f, RH - 0.6f, z), neonL[i % 2], 1.8f, 7f);
+            WallNeon("NeonR" + i, new Vector3( hw - 0.3f, RH - 0.6f, z), neonR[i % 2], 1.8f, 7f);
         }
         // Zone accent lights — mid-height green (roulette) and blue (cards)
         float[] accentZ = { -10f, 0f, 10f };
