@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Animations;
 using UnityEngine.UI;
 
 public class GameSceneFixer
@@ -359,6 +360,47 @@ public class GameSceneFixer
     }
 
     // ─────────────────────────────────────────────────────────────────────
+    // ANIMATOR CONTROLLER — Idle / Walk states driven by "Moving" bool
+    // ─────────────────────────────────────────────────────────────────────
+    static AnimatorController GetOrCreateCaseritoController()
+    {
+        const string ctrlPath = "Assets/Models/CaseritoAnim.controller";
+        var ctrl = AssetDatabase.LoadAssetAtPath<AnimatorController>(ctrlPath);
+        if (ctrl != null) return ctrl;
+
+        ctrl = AnimatorController.CreateAnimatorControllerAtPath(ctrlPath);
+        ctrl.AddParameter("Moving", AnimatorControllerParameterType.Bool);
+
+        var sm = ctrl.layers[0].stateMachine;
+
+        AnimationClip idleClip = null, walkClip = null;
+        foreach (var o in AssetDatabase.LoadAllAssetsAtPath("Assets/Models/Human@Idle.fbx"))
+            if (o is AnimationClip c && !c.name.StartsWith("__preview__")) { idleClip = c; break; }
+        foreach (var o in AssetDatabase.LoadAllAssetsAtPath("Assets/Models/Human@Walking.fbx"))
+            if (o is AnimationClip c && !c.name.StartsWith("__preview__")) { walkClip = c; break; }
+
+        var idleState = sm.AddState("Idle");
+        idleState.motion = idleClip;
+        sm.defaultState = idleState;
+
+        var walkState = sm.AddState("Walk");
+        walkState.motion = walkClip;
+
+        var toWalk = idleState.AddTransition(walkState);
+        toWalk.AddCondition(AnimatorConditionMode.If, 0, "Moving");
+        toWalk.hasExitTime = false;
+        toWalk.duration = 0.15f;
+
+        var toIdle = walkState.AddTransition(idleState);
+        toIdle.AddCondition(AnimatorConditionMode.IfNot, 0, "Moving");
+        toIdle.hasExitTime = false;
+        toIdle.duration = 0.15f;
+
+        AssetDatabase.SaveAssets();
+        return ctrl;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
     // CASERITO SPAWN  — builds full visual hierarchy at edit-time so models
     // are visible in Scene view and in Play mode without runtime creation
     // ─────────────────────────────────────────────────────────────────────
@@ -368,31 +410,54 @@ public class GameSceneFixer
         var root = new GameObject(goName);
         root.transform.position = position;
 
-        // ── Body capsule ──────────────────────────────────────────────────
-        var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-        body.name = "Body";
-        body.transform.SetParent(root.transform, false);
-        body.transform.localPosition = new Vector3(0f, 1f, 0f);
-        Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());   // root owns colliders
+        // ── Animated human model (replaces primitive capsule) ─────────────
+        var ctrl = GetOrCreateCaseritoController();
+        var modelPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Models/Human@Idle.fbx");
+        if (modelPrefab != null)
+        {
+            var modelGO = Object.Instantiate(modelPrefab);
+            modelGO.name = "Body";
+            modelGO.transform.SetParent(root.transform, false);
+            modelGO.transform.localPosition = Vector3.zero;
+            modelGO.transform.localRotation = Quaternion.identity;
+            modelGO.transform.localScale    = Vector3.one;
 
-        var bodyMat = new Material(Shader.Find("Standard"));
-        bodyMat.color = new Color(0.28f, 0.02f, 0.02f);
-        bodyMat.SetFloat("_Metallic",    0.72f);
-        bodyMat.SetFloat("_Glossiness",  0.55f);
-        body.GetComponent<MeshRenderer>().sharedMaterial = bodyMat;
+            // Root owns all colliders — strip any on the model children
+            foreach (var col in modelGO.GetComponentsInChildren<Collider>())
+                Object.DestroyImmediate(col);
 
-        // ── Eye sphere ────────────────────────────────────────────────────
+            var anim = modelGO.GetComponent<Animator>();
+            if (anim == null) anim = modelGO.AddComponent<Animator>();
+            anim.runtimeAnimatorController = ctrl;
+            anim.applyRootMotion = false;
+        }
+        else
+        {
+            // Fallback: red capsule if FBX is missing
+            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Body";
+            body.transform.SetParent(root.transform, false);
+            body.transform.localPosition = new Vector3(0f, 1f, 0f);
+            Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
+            var bodyMat = new Material(Shader.Find("Standard"));
+            bodyMat.color = new Color(0.28f, 0.02f, 0.02f);
+            bodyMat.SetFloat("_Metallic",   0.72f);
+            bodyMat.SetFloat("_Glossiness", 0.55f);
+            body.GetComponent<MeshRenderer>().sharedMaterial = bodyMat;
+        }
+
+        // ── Eye sphere (glows red when pursuing) ──────────────────────────
         var eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         eye.name = "Eye";
         eye.transform.SetParent(root.transform, false);
-        eye.transform.localPosition = new Vector3(0f, 1.55f, 0.53f);  // past capsule radius (0.5)
-        eye.transform.localScale    = new Vector3(0.26f, 0.26f, 0.26f);
+        eye.transform.localPosition = new Vector3(0f, 1.6f, 0.35f);
+        eye.transform.localScale    = new Vector3(0.18f, 0.18f, 0.18f);
         Object.DestroyImmediate(eye.GetComponent<SphereCollider>());
 
         var eyeMat = new Material(Shader.Find("Standard"));
         eyeMat.color = new Color(0.12f, 0.0f, 0.0f);
         eyeMat.EnableKeyword("_EMISSION");
-        eyeMat.SetColor("_EmissionColor", Color.black);   // off at start
+        eyeMat.SetColor("_EmissionColor", Color.black);
         eye.GetComponent<MeshRenderer>().sharedMaterial = eyeMat;
 
         // ── Root colliders ────────────────────────────────────────────────
@@ -415,7 +480,6 @@ public class GameSceneFixer
         rb.constraints            = RigidbodyConstraints.FreezeRotation;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-        // ── Behavior script ───────────────────────────────────────────────
         // [RequireComponent(Rigidbody)] already satisfied above
         root.AddComponent<Caserito>();
     }

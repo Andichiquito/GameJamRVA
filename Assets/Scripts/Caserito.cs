@@ -21,6 +21,7 @@ public class Caserito : MonoBehaviour
 
     // ── Components ─────────────────────────────────────────────────────────
     Rigidbody    _rb;
+    Animator     _anim;
     MeshRenderer _bodyRend;
     MeshRenderer _eyeRend;
     Material     _eyeMat;
@@ -64,6 +65,9 @@ public class Caserito : MonoBehaviour
         _player = GameObject.FindWithTag("Player")?.transform;
         _cam    = Camera.main;
 
+        _anim = GetComponentInChildren<Animator>();
+        _anim?.Play("Idle", 0, Random.value);   // start mid-cycle so 3 caseritos don't sync
+
         GrabVisuals();
         BuildAudio();
         StartCoroutine(ActivateAfterDelay());
@@ -73,13 +77,30 @@ public class Caserito : MonoBehaviour
     // ── Visuals ────────────────────────────────────────────────────────────
     void GrabVisuals()
     {
-        if (transform.Find("Body")?.TryGetComponent(out MeshRenderer bR) == true)
+        var bodyChild = transform.Find("Body");
+        if (bodyChild != null)
         {
-            _bodyMat = new Material(bR.sharedMaterial);
-            _bodyMat.EnableKeyword("_EMISSION");
-            _bodyMat.SetColor("_EmissionColor", Color.black);
-            bR.material = _bodyMat;
-            _bodyRend = bR;
+            if (bodyChild.TryGetComponent(out MeshRenderer mr))
+            {
+                // Primitive capsule fallback
+                _bodyMat = new Material(mr.sharedMaterial);
+                _bodyMat.EnableKeyword("_EMISSION");
+                _bodyMat.SetColor("_EmissionColor", Color.black);
+                mr.material = _bodyMat;
+                _bodyRend = mr;
+            }
+            else
+            {
+                // FBX model: use first SkinnedMeshRenderer found in children
+                var smr = bodyChild.GetComponentInChildren<SkinnedMeshRenderer>();
+                if (smr != null)
+                {
+                    _bodyMat = new Material(smr.sharedMaterial);
+                    _bodyMat.EnableKeyword("_EMISSION");
+                    _bodyMat.SetColor("_EmissionColor", Color.black);
+                    smr.material = _bodyMat;
+                }
+            }
         }
         if (transform.Find("Eye")?.TryGetComponent(out MeshRenderer eR) == true)
         {
@@ -275,6 +296,7 @@ public class Caserito : MonoBehaviour
     void EnterFrozen()
     {
         _state = State.Frozen;
+        _anim?.SetBool("Moving", false);
         SetEyeGlow(false);
         SetBodyPulse(0f);
         _eventSrc.PlayOneShot(freezeClip);
@@ -283,6 +305,7 @@ public class Caserito : MonoBehaviour
     void EnterMoving()
     {
         _state = State.Moving;
+        _anim?.SetBool("Moving", true);
         SetEyeGlow(true);
     }
 
